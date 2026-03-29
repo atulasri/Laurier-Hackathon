@@ -11,7 +11,9 @@ import {
 } from "lucide-react";
 
 // ─── LAURIER DATA ────────────────────────────────────────────────────────────
-
+const pageShell =
+  "min-h-screen bg-gradient-to-br from-rose-950 via-fuchsia-950 to-pink-950 text-white";
+  
 const PROGRAMS_BY_FACULTY = {
   "Lazarides School of Business & Economics": [
     "Business Administration (BBA)","Accounting & Financial Management",
@@ -150,35 +152,54 @@ function AvatarBubble({ initials = "??", size = "md" }) {
 }
 
 function MatchBadge({ score }) {
-  const style = score >= 80 ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/30"
-    : score >= 60 ? "text-amber-400 bg-amber-400/10 border-amber-400/30"
-    : "text-slate-400 bg-slate-700 border-slate-600";
-  return <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${style}`}>{score}% match</span>;
+  const style =
+    score >= 80
+      ? "text-emerald-300 bg-emerald-400/10 border-emerald-400/25"
+      : score >= 60
+      ? "text-amber-300 bg-amber-400/10 border-amber-400/25"
+      : "text-pink-100/70 bg-pink-200/10 border-pink-200/15";
+
+  return (
+    <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${style}`}>
+      {score}% match
+    </span>
+  );
 }
 
 function Chip({ children, selected, onClick }) {
   return (
-    <button onClick={onClick} className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-150 ${selected ? "bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-500/20" : "bg-slate-800/80 text-slate-400 border-slate-700 hover:border-indigo-500/60 hover:text-indigo-300"}`}>
+    <button
+      onClick={onClick}
+      className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-150 ${
+        selected
+          ? "bg-pink-600 text-white border-pink-500 shadow-lg shadow-pink-500/20"
+          : "bg-pink-200/10 text-pink-100/75 border-pink-200/10 hover:border-pink-400/50 hover:text-white"
+      }`}
+    >
       {children}
     </button>
   );
 }
 
 function Tag({ children }) {
-  return <span className="text-xs bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded-full">{children}</span>;
+  return (
+    <span className="text-xs bg-pink-500/10 text-pink-200 border border-pink-400/20 px-2 py-0.5 rounded-full">
+      {children}
+    </span>
+  );
 }
 
 function Card({ children, className = "" }) {
-  return <div className={`bg-slate-900 border border-white/5 rounded-2xl ${className}`}>{children}</div>;
+  return <div className={`bg-pink-500/10 border border-pink-200/15 rounded-2xl backdrop-blur-xl ${className}`}>{children}</div>;
 }
 
 function InputField({ label, type = "text", value, onChange, placeholder, rightElement }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">{label}</label>
+      <label className="block text-xs font-semibold text-pink-100/70 mb-1.5 uppercase tracking-wider">{label}</label>
       <div className="relative">
         <input type={type} value={value} onChange={onChange} placeholder={placeholder}
-          className="w-full bg-slate-800 border border-slate-700 focus:border-indigo-500 text-white rounded-xl px-4 py-3 text-sm outline-none transition-colors placeholder-slate-600 pr-12" />
+          className="w-full bg-white/10 border border-pink-200/10 focus:border-pink-400 text-white rounded-xl px-4 py-3 text-sm outline-none transition-colors placeholder-pink-100/30 pr-12" />
         {rightElement && <div className="absolute right-3 top-1/2 -translate-y-1/2">{rightElement}</div>}
       </div>
     </div>
@@ -189,19 +210,27 @@ function InputField({ label, type = "text", value, onChange, placeholder, rightE
 
 function Navbar({ currentPage, onNavigate, unreadCount = 0 }) {
   const tabs = [
-    { id:"browse",        label:"Discover",  emoji:"🔍" },
-    { id:"notifications", label:"Alerts",    emoji:"🔔", badge: unreadCount },
-    { id:"chats",         label:"Messages",  emoji:"💬" },
-    { id:"account",       label:"Profile",   emoji:"👤" },
+    { id: "browse", label: "Discover", emoji: "🔍" },
+    { id: "notifications", label: "Alerts", emoji: "🔔", badge: unreadCount },
+    { id: "chats", label: "Messages", emoji: "💬" },
+    { id: "account", label: "Profile", emoji: "👤" },
   ];
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-xl border-t border-white/5 flex">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#1b0718]/85 backdrop-blur-xl border-t border-pink-200/10 flex">
       {tabs.map(({ id, label, emoji, badge }) => {
         const active = currentPage === id;
         return (
-          <button key={id} onClick={() => onNavigate(id)} className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-all relative ${active ? "text-indigo-400" : "text-slate-600 hover:text-slate-400"}`}>
+          <button
+            key={id}
+            onClick={() => onNavigate(id)}
+            className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-all relative ${
+              active ? "text-pink-400" : "text-pink-100/35 hover:text-pink-100/70"
+            }`}
+          >
             <span className="text-lg leading-none">{emoji}</span>
             <span className="text-[10px] font-medium">{label}</span>
+
             {badge > 0 && (
               <span className="absolute top-2 right-[22%] w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
                 {badge > 9 ? "9+" : badge}
@@ -218,39 +247,81 @@ function Navbar({ currentPage, onNavigate, unreadCount = 0 }) {
 
 function LandingPage({ onGetStarted }) {
   return (
-    <div className="min-h-screen bg-[#06080f] text-white flex flex-col">
-      <header className="flex items-center justify-between px-6 py-5">
+    <div className="min-h-screen bg-gradient-to-br from-rose-950 via-fuchsia-950 to-pink-950 text-white flex flex-col relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 w-[32rem] h-[32rem] bg-pink-500/12 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 left-20 w-72 h-72 bg-rose-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-40 right-16 w-80 h-80 bg-fuchsia-500/10 rounded-full blur-3xl" />
+      </div>
+
+      <header className="relative z-10 flex items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-pink-600 rounded-lg flex items-center justify-center shadow-lg shadow-pink-500/30">
             <Zap size={15} className="text-white" />
           </div>
           <span className="font-black text-lg tracking-tight">StudySync</span>
         </div>
-        <button onClick={onGetStarted} className="text-sm text-slate-400 hover:text-white transition-colors">Sign In →</button>
-      </header>
-      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center pb-16">
-        <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-4 py-1.5 text-indigo-400 text-xs font-medium mb-8">
-          <Star size={12} /> Built for Laurier Students
-        </div>
-        <h1 className="text-5xl md:text-6xl font-black mb-5 leading-[1.05] tracking-tight">
-          Find your best<br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-400 to-cyan-400">study group</span>
-        </h1>
-        <p className="text-slate-400 text-lg max-w-sm mx-auto mb-10 leading-relaxed">Match with classmates by course, schedule, and study style. Stop studying alone.</p>
-        <button onClick={onGetStarted} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-4 rounded-2xl transition-all text-base shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5">
-          Get Matched <ArrowRight size={18} />
+        <button
+          onClick={onGetStarted}
+          className="text-sm text-pink-200/80 hover:text-white transition-colors"
+        >
+          Sign In →
         </button>
-        <div className="grid grid-cols-3 gap-3 max-w-lg mx-auto mt-16">
+      </header>
+
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center pb-16">
+        <div className="inline-flex items-center gap-2 bg-pink-500/10 border border-pink-400/20 rounded-full px-4 py-1.5 text-pink-300 text-xs font-medium mb-8">
+          <Heart size={12} className="text-amber-400 fill-amber-400" /> Made for Laurier study matches
+        </div>
+
+        <h1 className="text-5xl md:text-6xl font-black mb-5 leading-[1.05] tracking-tight max-w-4xl">
+          Find your perfect
+          <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-rose-400 to-fuchsia-400">
+            study match
+          </span>
+        </h1>
+
+        <p className="text-pink-100/70 text-lg max-w-xl mx-auto mb-10 leading-relaxed">
+          Match with classmates who share your courses, schedule, and study vibe. Find your perfect study partner, spark connections, and never study alone again.
+        </p>
+
+        <button
+          onClick={onGetStarted}
+          className="flex items-center gap-2 bg-pink-600 hover:bg-pink-500 text-white font-bold px-8 py-4 rounded-2xl transition-all text-base shadow-xl shadow-pink-500/25 hover:shadow-pink-500/40 hover:-translate-y-0.5"
+        >
+          Find My Match <ArrowRight size={18} />
+        </button>
+
+        <div className="grid grid-cols-3 gap-3 max-w-2xl mx-auto mt-16">
           {[
-            { emoji:"👤", step:"01", title:"Build profile",  desc:"Add courses & schedule" },
-            { emoji:"🔍", step:"02", title:"Get matched",    desc:"Smart compatibility score" },
-            { emoji:"👥", step:"03", title:"Connect",        desc:"Message & study together" },
+            {
+              emoji: "💖",
+              step: "01",
+              title: "Make your profile",
+              desc: "Add your courses, vibe, and schedule",
+            },
+            {
+              emoji: "🔎",
+              step: "02",
+              title: "Discover matches",
+              desc: "Find students you actually click with",
+            },
+            {
+              emoji: "💬",
+              step: "03",
+              title: "Start chatting",
+              desc: "Message, meet up, and study together",
+            },
           ].map(({ emoji, step, title, desc }) => (
-            <div key={step} className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 text-center">
+            <div
+              key={step}
+              className="bg-white/[0.04] border border-pink-300/10 rounded-2xl p-4 text-center backdrop-blur-sm"
+            >
               <div className="text-2xl mb-2">{emoji}</div>
-              <div className="text-indigo-500 text-[10px] font-bold mb-1">{step}</div>
+              <div className="text-pink-400 text-[10px] font-bold mb-1">{step}</div>
               <div className="text-white text-xs font-semibold mb-0.5">{title}</div>
-              <div className="text-slate-500 text-[10px]">{desc}</div>
+              <div className="text-pink-100/45 text-[10px]">{desc}</div>
             </div>
           ))}
         </div>
@@ -303,16 +374,18 @@ function LoginPage({ onAuthSuccess }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#06080f] flex items-center justify-center px-5">
+    <div className="min-h-screen bg-gradient-to-br from-rose-950 via-fuchsia-950 to-pink-950 flex items-center justify-center px-5">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-indigo-500/30">
+          <div className="w-14 h-14 bg-gradient-to-br from-pink-600 to-rose-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-pink-500/30">
             <Zap size={24} className="text-white" />
           </div>
-          <h1 className="text-2xl font-black text-white">{isSignUp ? "Create your account" : "Welcome back"}</h1>
-          <p className="text-slate-500 text-sm mt-1">{isSignUp ? "Join StudySync with your student email" : "Sign in to find your study group"}</p>
+          <h1 className="text-2xl font-black text-white">
+  {isSignUp ? "Create your study match profile" : "Welcome back"}
+</h1>
+          <p className="text-pink-100/60 text-sm mt-1">{isSignUp ? "Create your profile and start matching with study partners" : "Sign in to reconnect with your study matches"}</p>
         </div>
-        <Card className="p-6 space-y-4">
+        <Card className="p-6 space-y-4 bg-gradient-to-br from-pink-400/10 to-rose-400/10 border border-pink-200/20 shadow-2xl shadow-pink-900/20 backdrop-blur-xl">
           {isSignUp && (
             <InputField label="Your Name" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="e.g. Alex Chen" />
           )}
@@ -324,25 +397,25 @@ function LoginPage({ onAuthSuccess }) {
             onChange={e => setPassword(e.target.value)}
             placeholder={isSignUp ? "Choose a password (6+ chars)" : "Your password"}
             rightElement={
-              <button onClick={() => setShowPass(p => !p)} className="text-slate-500 hover:text-slate-300 transition-colors">
+              <button onClick={() => setShowPass(p => !p)} className="text-pink-100/40 hover:text-pink-200 transition-colors">
                 {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             }
           />
           {error && <div className="bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-2.5 text-red-400 text-xs">{error}</div>}
           {info  && <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-xl px-4 py-2.5 text-emerald-400 text-xs">{info}</div>}
-          <button onClick={handleSubmit} disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all text-sm shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2">
+          <button onClick={handleSubmit} disabled={loading} className="w-full bg-pink-600 hover:bg-pink-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all text-sm shadow-lg shadow-pink-500/20 flex items-center justify-center gap-2">
             {loading && <Loader2 size={16} className="animate-spin" />}
             {loading ? "Please wait…" : isSignUp ? "Create Account" : "Sign In →"}
           </button>
         </Card>
-        <p className="text-center text-slate-500 text-sm mt-5">
+        <p className="text-center text-pink-100/55 text-sm mt-5">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-          <button onClick={() => { setMode(isSignUp ? "signin" : "signup"); setError(""); setInfo(""); }} className="text-indigo-400 hover:text-indigo-300 font-semibold transition-colors">
+          <button onClick={() => { setMode(isSignUp ? "signin" : "signup"); setError(""); setInfo(""); }} className="text-pink-400 hover:text-indigo-300 font-semibold transition-colors">
             {isSignUp ? "Sign in" : "Sign up"}
           </button>
         </p>
-        <p className="text-center text-slate-700 text-xs mt-3">Powered by Supabase Auth · data is real and saved</p>
+        <p className="text-center text-pink-100/25 text-xs mt-3">Powered by Supabase Auth · data is real and saved</p>
       </div>
     </div>
   );
@@ -357,15 +430,22 @@ function StepHeader({ step, title, subtitle, icon: Icon }) {
     <div className="mb-6">
       <div className="flex items-center gap-1 mb-5">
         {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-          <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${i < step ? "bg-indigo-500" : "bg-slate-800"}`} />
+          <div
+            key={i}
+            className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+              i < step ? "bg-pink-500" : "bg-pink-200/10"
+            }`}
+          />
         ))}
       </div>
       <div className="flex items-center gap-2 mb-1">
-        <Icon size={15} className="text-indigo-400" />
-        <span className="text-indigo-400 text-xs font-bold uppercase tracking-widest">Step {step} of {TOTAL_STEPS}</span>
+        <Icon size={15} className="text-pink-400" />
+        <span className="text-pink-400 text-xs font-bold uppercase tracking-widest">
+          Step {step} of {TOTAL_STEPS}
+        </span>
       </div>
       <h2 className="text-2xl font-black text-white">{title}</h2>
-      {subtitle && <p className="text-slate-500 text-sm mt-1">{subtitle}</p>}
+      {subtitle && <p className="text-pink-100/60 text-sm mt-1">{subtitle}</p>}
     </div>
   );
 }
@@ -374,17 +454,23 @@ function NavButtons({ onBack, onNext, canNext, nextLabel = "Continue" }) {
   return (
     <div className="flex gap-3 mt-6">
       {onBack && (
-        <button onClick={onBack} className="flex items-center gap-1.5 px-5 py-3 rounded-xl border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 transition-all text-sm font-medium">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-1.5 px-5 py-3 rounded-xl border border-pink-200/15 text-pink-100/65 hover:text-white hover:border-pink-300/40 transition-all text-sm font-medium"
+        >
           <ArrowLeft size={15} /> Back
         </button>
       )}
-      <button onClick={onNext} disabled={!canNext} className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all text-sm shadow-lg shadow-indigo-500/20">
+      <button
+        onClick={onNext}
+        disabled={!canNext}
+        className="flex-1 flex items-center justify-center gap-2 bg-pink-600 hover:bg-pink-500 disabled:bg-pink-900/40 disabled:text-pink-100/30 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all text-sm shadow-lg shadow-pink-500/20"
+      >
         {nextLabel} <ArrowRight size={16} />
       </button>
     </div>
   );
 }
-
 // ─── ONBOARDING FLOW ─────────────────────────────────────────────────────────
 
 function OnboardingFlow({ savedProfile, onComplete }) {
@@ -401,7 +487,7 @@ function OnboardingFlow({ savedProfile, onComplete }) {
   const [saving,       setSaving]       = useState(false);
 
   const toggleArr = (setter, val) =>
-    setter(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
+      setter(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
 
   const finish = async () => {
     setSaving(true);
@@ -412,10 +498,10 @@ function OnboardingFlow({ savedProfile, onComplete }) {
   const availableCourses = COURSES_BY_PROGRAM[program] || [];
 
   return (
-    <div className="min-h-screen bg-[#06080f] text-white pb-10">
+    <div className="min-h-screen bg-gradient-to-br from-rose-950 via-fuchsia-950 to-pink-950 text-white pb-10">
       <div className="max-w-lg mx-auto px-5 pt-10">
         <div className="flex items-center gap-2 mb-8">
-          <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
+          <div className="w-7 h-7 bg-pink-600 rounded-lg flex items-center justify-center">
             <Zap size={13} className="text-white" />
           </div>
           <span className="font-black text-base tracking-tight">StudySync</span>
@@ -427,7 +513,7 @@ function OnboardingFlow({ savedProfile, onComplete }) {
             <div className="space-y-5 max-h-[55vh] overflow-y-auto pr-1">
               {Object.entries(PROGRAMS_BY_FACULTY).map(([faculty, programs]) => (
                 <div key={faculty}>
-                  <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest mb-2">{faculty}</p>
+                  <p className="text-white-600 text-[10px] font-bold uppercase tracking-widest mb-2">{faculty}</p>
                   <div className="flex flex-wrap gap-2">
                     {programs.map(p => <Chip key={p} selected={program === p} onClick={() => setProgram(p)}>{p}</Chip>)}
                   </div>
@@ -452,7 +538,7 @@ function OnboardingFlow({ savedProfile, onComplete }) {
           <div>
             <StepHeader step={3} icon={BookOpen} title="Which courses are you in?" subtitle={`Select your current ${program} courses.`} />
             {availableCourses.length === 0 ? (
-              <p className="text-slate-500 text-sm">No preset courses for this program. You can add them later in settings.</p>
+              <p className="text-pink-100/55 text-sm">No preset courses for this program. You can add them later in settings.</p>
             ) : (
               <>
                 <div className="flex flex-wrap gap-2 max-h-[50vh] overflow-y-auto pr-1">
@@ -460,7 +546,7 @@ function OnboardingFlow({ savedProfile, onComplete }) {
                     <Chip key={c} selected={courses.includes(c)} onClick={() => toggleArr(setCourses, c)}>{c}</Chip>
                   ))}
                 </div>
-                {courses.length > 0 && <p className="text-indigo-400 text-xs mt-3">{courses.length} course{courses.length > 1 ? "s" : ""} selected</p>}
+                {courses.length > 0 && <p className="text-pink-400 text-xs mt-3">{courses.length} course{courses.length > 1 ? "s" : ""} selected</p>}
               </>
             )}
             <NavButtons onBack={() => setStep(2)} onNext={() => setStep(4)} canNext={courses.length > 0} />
@@ -475,7 +561,7 @@ function OnboardingFlow({ savedProfile, onComplete }) {
                 <Chip key={m} selected={motivations.includes(m)} onClick={() => toggleArr(setMotivations, m)}>{m}</Chip>
               ))}
             </div>
-            {motivations.length > 0 && <p className="text-indigo-400 text-xs mt-3">{motivations.length} selected</p>}
+            {motivations.length > 0 && <p className="text-pink-400 text-xs mt-3">{motivations.length} selected</p>}
             <NavButtons onBack={() => setStep(3)} onNext={() => setStep(5)} canNext={motivations.length > 0} />
           </div>
         )}
@@ -483,19 +569,19 @@ function OnboardingFlow({ savedProfile, onComplete }) {
         {step === 5 && (
           <div>
             <StepHeader step={5} icon={Calendar} title="Schedule & format" subtitle="Where do you want to meet, and when are you free?" />
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Meeting Format</p>
+            <p className="text-white-400 text-xs font-semibold uppercase tracking-wider mb-2">Meeting Format</p>
             <div className="flex gap-2 mb-6">
               {["In-Person","Online","Hybrid"].map(p => (
                 <Chip key={p} selected={meetingPref === p} onClick={() => setMeetingPref(p)}>{p}</Chip>
               ))}
             </div>
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Availability</p>
+            <p className="text-white-400 text-xs font-semibold uppercase tracking-wider mb-2">Availability</p>
             <div className="flex flex-wrap gap-2 max-h-[38vh] overflow-y-auto pr-1">
               {AVAILABILITY_SLOTS.map(s => (
                 <Chip key={s} selected={availability.includes(s)} onClick={() => toggleArr(setAvailability, s)}>{s}</Chip>
               ))}
             </div>
-            {availability.length > 0 && <p className="text-indigo-400 text-xs mt-3">{availability.length} slot{availability.length > 1 ? "s" : ""} selected</p>}
+            {availability.length > 0 && <p className="text-pink-400 text-xs mt-3">{availability.length} slot{availability.length > 1 ? "s" : ""} selected</p>}
             <NavButtons onBack={() => setStep(4)} onNext={() => setStep(6)} canNext={!!meetingPref && availability.length > 0} />
           </div>
         )}
@@ -503,11 +589,11 @@ function OnboardingFlow({ savedProfile, onComplete }) {
         {step === 6 && (
           <div>
             <StepHeader step={6} icon={User} title="A couple more things" subtitle="Optional — helps with comfort and preferences." />
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Your Gender</p>
+            <p className="text-white-400 text-xs font-semibold uppercase tracking-wider mb-2">Your Gender</p>
             <div className="flex flex-wrap gap-2 mb-6">
               {GENDERS.map(g => <Chip key={g} selected={gender === g} onClick={() => setGender(g)}>{g}</Chip>)}
             </div>
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Study Partner Gender Preference</p>
+            <p className="text-white-400 text-xs font-semibold uppercase tracking-wider mb-2">Study Partner Gender Preference</p>
             <div className="flex flex-wrap gap-2">
               {GENDER_PREFS.map(p => <Chip key={p} selected={genderPref === p} onClick={() => setGenderPref(p)}>{p}</Chip>)}
             </div>
@@ -527,12 +613,12 @@ function OnboardingFlow({ savedProfile, onComplete }) {
 // ─── PAGE: BROWSE MATCHES ────────────────────────────────────────────────────
 
 function BrowseMatchesPage({ myProfile, myUserId }) {
-  const [candidates,    setCandidates]    = useState([]);
-  const [idx,           setIdx]           = useState(0);
-  const [loading,       setLoading]       = useState(true);
-  const [expanded,      setExpanded]      = useState(false);
+  const [candidates, setCandidates] = useState([]);
+  const [idx, setIdx] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  const [toast,         setToast]         = useState(null);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     if (!myProfile) return;
@@ -547,10 +633,10 @@ function BrowseMatchesPage({ myProfile, myUserId }) {
         .or(`sender_id.eq.${myUserId},receiver_id.eq.${myUserId}`);
 
       const excludeIds = new Set();
-      const TWO_WEEKS  = 14 * 24 * 60 * 60 * 1000;
-      const now        = Date.now();
+      const TWO_WEEKS = 14 * 24 * 60 * 60 * 1000;
+      const now = Date.now();
 
-      (existingMatches || []).forEach(m => {
+      (existingMatches || []).forEach((m) => {
         const otherId = m.sender_id === myUserId ? m.receiver_id : m.sender_id;
         if (m.status === "accepted" || m.status === "pending") {
           excludeIds.add(otherId);
@@ -560,10 +646,10 @@ function BrowseMatchesPage({ myProfile, myUserId }) {
       });
 
       const scored = (profiles || [])
-        .filter(p => !excludeIds.has(p.id))
-        .filter(p => meetsGenderPreference(myProfile, p))
-        .map(p => ({ ...p, score: scoreMatch(myProfile, p) }))
-        .filter(p => p.score > 0)
+        .filter((p) => !excludeIds.has(p.id))
+        .filter((p) => meetsGenderPreference(myProfile, p))
+        .map((p) => ({ ...p, score: scoreMatch(myProfile, p) }))
+        .filter((p) => p.score > 0)
         .sort((a, b) => b.score - a.score);
 
       setCandidates(scored);
@@ -571,32 +657,54 @@ function BrowseMatchesPage({ myProfile, myUserId }) {
     })();
   }, [myProfile, myUserId]);
 
-  const showToast = msg => { setToast(msg); setTimeout(() => setToast(null), 2500); };
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  };
 
   const sendMatchRequest = async (toProfile) => {
     setActionLoading(true);
     const { data: match, error } = await supabase
       .from("matches")
       .insert({ sender_id: myUserId, receiver_id: toProfile.id, status: "pending" })
-      .select().single();
+      .select()
+      .single();
 
     if (!error && match) {
       await supabase.from("notifications").insert({
-        user_id: toProfile.id, type: "match_request",
-        from_user_id: myUserId, match_id: match.id,
+        user_id: toProfile.id,
+        type: "match_request",
+        from_user_id: myUserId,
+        match_id: match.id,
       });
       showToast(`Match request sent to ${toProfile.display_name || "them"}! 🎉`);
     }
+
     setActionLoading(false);
-    setIdx(i => i + 1);
+    setIdx((i) => i + 1);
     setExpanded(false);
   };
 
-  const skip = () => { setIdx(i => i + 1); setExpanded(false); };
+  const skip = () => {
+    setIdx((i) => i + 1);
+    setExpanded(false);
+  };
 
-  if (loading) return <div className="flex items-center justify-center py-24"><Loader2 size={28} className="text-indigo-500 animate-spin" /></div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 size={28} className="text-pink-500 animate-spin" />
+      </div>
+    );
+  }
 
-  if (!myProfile?.courses?.length) return <div className="py-20 text-center px-8"><p className="text-slate-400 text-sm">Complete your profile to see matches.</p></div>;
+  if (!myProfile?.courses?.length) {
+    return (
+      <div className="py-20 text-center px-8">
+        <p className="text-pink-100/60 text-sm">Complete your profile to see matches.</p>
+      </div>
+    );
+  }
 
   const current = candidates[idx];
 
@@ -605,14 +713,15 @@ function BrowseMatchesPage({ myProfile, myUserId }) {
       <div className="py-20 text-center px-8">
         <div className="text-5xl mb-4">🎓</div>
         <h3 className="text-white font-bold text-lg mb-2">You've seen everyone!</h3>
-        <p className="text-slate-500 text-sm max-w-xs mx-auto">New students join every day. Check back soon, or update your courses to expand your matches.</p>
+        <p className="text-pink-100/55 text-sm max-w-xs mx-auto">
+          New students join every day. Check back soon, or update your courses to expand your matches.
+        </p>
       </div>
     );
   }
 
-  const initials      = (current.display_name || "??").slice(0, 2).toUpperCase();
-  const sharedCourses = (myProfile.courses || []).filter(c => (current.courses || []).includes(c));
-
+  const initials = (current.display_name || "??").slice(0, 2).toUpperCase();
+  const sharedCourses = (myProfile.courses || []).filter((c) => (current.courses || []).includes(c));
   return (
     <div className="relative max-w-lg mx-auto px-5 pb-6">
       {toast && (
@@ -622,46 +731,81 @@ function BrowseMatchesPage({ myProfile, myUserId }) {
       )}
 
       <div className="flex items-center justify-between mb-4">
-        <span className="text-slate-600 text-xs">{idx + 1} / {candidates.length} potential matches</span>
+        <span className="text-pink-100/45 text-xs">{idx + 1} / {candidates.length} potential matches</span>
         <MatchBadge score={current.score} />
       </div>
 
-      <div className="bg-slate-900 border border-white/5 rounded-3xl overflow-hidden">
-        <div className="bg-gradient-to-br from-indigo-600/20 via-violet-600/10 to-transparent px-6 py-8 flex flex-col items-center text-center">
+      <div className="bg-gradient-to-br from-pink-400/10 to-rose-400/10 border border-pink-200/15 rounded-3xl overflow-hidden backdrop-blur-xl shadow-2xl shadow-pink-900/20">
+        <div className="bg-gradient-to-br from-pink-500/15 via-rose-500/10 to-transparent px-6 py-8 flex flex-col items-center text-center">
           <AvatarBubble initials={initials} size="xl" />
           <h2 className="text-xl font-black text-white mt-4">{current.display_name || "Student"}</h2>
-          <p className="text-slate-400 text-sm mt-0.5">{current.program} · {current.year}</p>
-          {current.bio && <p className="text-slate-300 text-sm mt-3 leading-relaxed max-w-xs">{current.bio}</p>}
+          <p className="text-pink-100/65 text-sm mt-0.5">
+            {current.program} · {current.year}
+          </p>
+          {current.bio && (
+            <p className="text-pink-100/80 text-sm mt-3 leading-relaxed max-w-xs">{current.bio}</p>
+          )}
         </div>
 
         <div className="px-6 pb-5 space-y-4">
           <div>
-            <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest mb-2">Shared Courses</p>
-            <div className="flex flex-wrap gap-1.5">{sharedCourses.map(c => <Tag key={c}>{c}</Tag>)}</div>
+            <p className="text-pink-100/45 text-[10px] font-bold uppercase tracking-widest mb-2">
+              Shared Courses
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {sharedCourses.map((c) => (
+                <Tag key={c}>{c}</Tag>
+              ))}
+            </div>
           </div>
+
           {(current.motivations || []).length > 0 && (
             <div>
-              <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest mb-2">Goals</p>
-              <div className="flex flex-wrap gap-1.5">{(current.motivations || []).slice(0, 4).map(m => <Tag key={m}>{m}</Tag>)}</div>
+              <p className="text-pink-100/45 text-[10px] font-bold uppercase tracking-widest mb-2">
+                Goals
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {(current.motivations || []).slice(0, 4).map((m) => (
+                  <Tag key={m}>{m}</Tag>
+                ))}
+              </div>
             </div>
           )}
-          <div className="flex gap-4 text-xs text-slate-500">
+
+          <div className="flex gap-4 text-xs text-pink-100/55">
             <span>📍 {current.meeting_preference || "—"}</span>
             <span>🕐 {(current.availability || []).length} slots free</span>
           </div>
-          <button onClick={() => setExpanded(e => !e)} className="flex items-center gap-1 text-indigo-400 text-xs font-medium">
+
+          <button onClick={() => setExpanded((e) => !e)} className="flex items-center gap-1 text-pink-400 text-xs font-medium">
             {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
             {expanded ? "Hide" : "Show"} availability
           </button>
-          {expanded && <div className="flex flex-wrap gap-1.5">{(current.availability || []).map(s => <Tag key={s}>{s}</Tag>)}</div>}
+
+          {expanded && (
+            <div className="flex flex-wrap gap-1.5">
+              {(current.availability || []).map((s) => (
+                <Tag key={s}>{s}</Tag>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       <div className="flex gap-3 mt-4">
-        <button onClick={skip} disabled={actionLoading} className="flex-1 flex items-center justify-center gap-2 border border-slate-700 hover:border-red-500/40 hover:bg-red-500/5 text-slate-400 hover:text-red-400 font-semibold py-3.5 rounded-2xl transition-all">
+        <button
+          onClick={skip}
+          disabled={actionLoading}
+          className="flex-1 flex items-center justify-center gap-2 border border-pink-200/15 hover:border-pink-300/40 hover:bg-pink-500/5 text-pink-100/70 hover:text-white font-semibold py-3.5 rounded-2xl transition-all"
+        >
           <X size={18} /> Skip
         </button>
-        <button onClick={() => sendMatchRequest(current)} disabled={actionLoading} className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-indigo-500/20">
+
+        <button
+          onClick={() => sendMatchRequest(current)}
+          disabled={actionLoading}
+          className="flex-1 flex items-center justify-center gap-2 bg-pink-600 hover:bg-pink-500 disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-pink-500/20"
+        >
           {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <Heart size={18} />}
           Match
         </button>
@@ -747,10 +891,10 @@ function NotificationsPage({ myUserId, onOpenChat }) {
   return (
     <div>
       {/* Tab switcher */}
-      <div className="flex gap-1 bg-slate-900/80 p-1 rounded-xl mb-5 border border-white/5">
+      <div className="flex gap-1 bg-pink-200/10 p-1 rounded-xl mb-5 border border-pink-200/10 backdrop-blur-xl">
         <button
           onClick={() => setTab("inbox")}
-          className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${tab === "inbox" ? "bg-indigo-600 text-white shadow" : "text-slate-500 hover:text-slate-300"}`}
+          className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${tab === "inbox" ? "bg-pink-600 text-white shadow" : "text-white-500 hover:text-white-300"}`}
         >
           Inbox
           {inboxUnread > 0 && (
@@ -761,7 +905,7 @@ function NotificationsPage({ myUserId, onOpenChat }) {
         </button>
         <button
           onClick={() => setTab("pending")}
-          className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${tab === "pending" ? "bg-indigo-600 text-white shadow" : "text-slate-500 hover:text-slate-300"}`}
+          className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${tab === "pending" ? "bg-pink-600 text-white shadow" : "text-white-500 hover:text-white-300"}`}
         >
           Pending
           {pending.length > 0 && (
@@ -778,7 +922,7 @@ function NotificationsPage({ myUserId, onOpenChat }) {
           {notifications.length === 0 ? (
             <div className="py-20 text-center px-8">
               <div className="text-4xl mb-3">🔔</div>
-              <p className="text-slate-500 text-sm">No notifications yet. Start discovering people!</p>
+              <p className="text-pink-100/55 text-sm">No notifications yet. Start discovering people!</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -787,19 +931,19 @@ function NotificationsPage({ myUserId, onOpenChat }) {
                 const initials = name.slice(0, 2).toUpperCase();
                 const unread   = !n.read;
                 return (
-                  <div key={n.id} className={`bg-slate-900 border rounded-2xl p-4 transition-all ${unread ? "border-indigo-500/30" : "border-white/5"}`}>
+                  <div key={n.id} className={`bg-white-900 border rounded-2xl p-4 transition-all ${unread ? "border-pink-500/30" : "border-white/5"}`}>
                     <div className="flex items-start gap-3">
                       <AvatarBubble initials={initials} size="sm" />
                       <div className="flex-1 min-w-0">
                         {n.type === "match_request" && (
                           <>
                             <p className="text-white text-sm font-semibold">{name} wants to study with you!</p>
-                            <p className="text-slate-500 text-xs mt-0.5">{n.from_profile?.program} · {n.from_profile?.year}</p>
+                            <p className="text-white-500 text-xs mt-0.5">{n.from_profile?.program} · {n.from_profile?.year}</p>
                             <div className="flex gap-2 mt-3">
-                              <button onClick={() => acceptMatch(n)} className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all">
+                              <button onClick={() => acceptMatch(n)} className="flex items-center gap-1.5 bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all">
                                 <Check size={12} /> Accept
                               </button>
-                              <button onClick={() => declineMatch(n)} className="flex items-center gap-1.5 border border-slate-700 hover:border-red-500/40 text-slate-400 hover:text-red-400 text-xs font-medium px-3 py-1.5 rounded-xl transition-all">
+                              <button onClick={() => declineMatch(n)} className="flex items-center gap-1.5 border border-white-700 hover:border-red-500/40 text-white-400 hover:text-red-400 text-xs font-medium px-3 py-1.5 rounded-xl transition-all">
                                 <X size={12} /> Decline
                               </button>
                             </div>
@@ -808,7 +952,7 @@ function NotificationsPage({ myUserId, onOpenChat }) {
                         {n.type === "match_accepted" && (
                           <>
                             <p className="text-emerald-400 text-sm font-semibold">{name} accepted your match! 🎉</p>
-                            <p className="text-slate-500 text-xs mt-0.5">You can now message each other</p>
+                            <p className="text-white-500 text-xs mt-0.5">You can now message each other</p>
                             <button onClick={() => { markRead(n.id); onOpenChat(n.match_id, n.from_user_id, name); }}
                               className="flex items-center gap-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-xl mt-3 transition-all">
                               <MessageCircle size={12} /> Open Chat
@@ -816,10 +960,10 @@ function NotificationsPage({ myUserId, onOpenChat }) {
                           </>
                         )}
                         {n.type === "match_declined" && (
-                          <p className="text-slate-400 text-sm">{name} is not available right now. You'll see them again in 2 weeks.</p>
+                          <p className="text-white-400 text-sm">{name} is not available right now. You'll see them again in 2 weeks.</p>
                         )}
                         {unread && (
-                          <button onClick={() => markRead(n.id)} className="text-slate-600 hover:text-slate-400 text-[10px] mt-2 transition-colors">
+                          <button onClick={() => markRead(n.id)} className="text-white-600 hover:text-white-400 text-[10px] mt-2 transition-colors">
                             Mark as read
                           </button>
                         )}
@@ -841,11 +985,11 @@ function NotificationsPage({ myUserId, onOpenChat }) {
             <div className="py-20 text-center px-8">
               <div className="text-4xl mb-3">⏳</div>
               <p className="text-white font-semibold text-sm mb-1">No pending requests</p>
-              <p className="text-slate-500 text-sm">Match requests you send will appear here while you wait for a response.</p>
+              <p className="text-pink-100/55 text-sm">Match requests you send will appear here while you wait for a response.</p>
             </div>
           ) : (
             <>
-              <p className="text-slate-600 text-xs mb-4">
+              <p className="text-white-600 text-xs mb-4">
                 {pending.length} request{pending.length > 1 ? "s" : ""} waiting for a response
               </p>
               <div className="space-y-3">
@@ -863,7 +1007,7 @@ function NotificationsPage({ myUserId, onOpenChat }) {
                   })();
 
                   return (
-                    <div key={m.id} className="bg-slate-900 border border-amber-500/15 rounded-2xl p-4">
+                    <div key={m.id} className="bg-white-900 border border-amber-500/15 rounded-2xl p-4">
                       <div className="flex items-start gap-3">
                         <AvatarBubble initials={initials} size="sm" />
                         <div className="flex-1 min-w-0">
@@ -871,7 +1015,7 @@ function NotificationsPage({ myUserId, onOpenChat }) {
                             <p className="text-white text-sm font-semibold">{name}</p>
                             <span className="text-amber-500/70 text-[10px] font-medium flex-shrink-0">⏳ {sentAgo}</span>
                           </div>
-                          <p className="text-slate-500 text-xs mt-0.5">{rec?.program} · {rec?.year}</p>
+                          <p className="text-white-500 text-xs mt-0.5">{rec?.program} · {rec?.year}</p>
                           <div className="flex flex-wrap gap-1.5 mt-2">
                             {(rec?.courses || []).slice(0, 3).map(c => <Tag key={c}>{c}</Tag>)}
                             {rec?.meeting_preference && <Tag>{rec.meeting_preference}</Tag>}
@@ -882,7 +1026,7 @@ function NotificationsPage({ myUserId, onOpenChat }) {
                             </span>
                             <button
                               onClick={() => cancelRequest(m.id)}
-                              className="text-slate-600 hover:text-red-400 text-[10px] font-medium transition-colors"
+                              className="text-white-600 hover:text-red-400 text-[10px] font-medium transition-colors"
                             >
                               Cancel request
                             </button>
@@ -913,41 +1057,72 @@ function ChatsListPage({ myUserId, onOpenChat }) {
         .from("matches")
         .select("*, sender:sender_id(display_name), receiver:receiver_id(display_name)")
         .or(`sender_id.eq.${myUserId},receiver_id.eq.${myUserId}`)
-        .eq("status", "accepted");
+        .eq("status", "accepted")
+        .order("updated_at", { ascending: false });
+
       setMatches(data || []);
       setLoading(false);
     })();
   }, [myUserId]);
 
-  if (loading) return <div className="flex justify-center py-20"><Loader2 size={24} className="text-indigo-500 animate-spin" /></div>;
+  if (loading) {
+    return (
+      <div className={pageShell}>
+        <div className="max-w-lg mx-auto px-5 pt-10 pb-24 flex justify-center py-20">
+          <Loader2 size={24} className="text-pink-500 animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      {matches.length === 0 ? (
-        <div className="py-20 text-center px-8">
-          <div className="text-4xl mb-3">💬</div>
-          <p className="text-slate-500 text-sm">No matches yet. Start discovering people!</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {matches.map(m => {
-            const otherId   = m.sender_id === myUserId ? m.receiver_id : m.sender_id;
-            const otherName = m.sender_id === myUserId ? m.receiver?.display_name : m.sender?.display_name;
-            const initials  = (otherName || "??").slice(0, 2).toUpperCase();
-            return (
-              <button key={m.id} onClick={() => onOpenChat(m.id, otherId, otherName || "Study Partner")}
-                className="w-full flex items-center gap-4 bg-slate-900 border border-white/5 hover:border-indigo-500/30 rounded-2xl p-4 transition-all text-left">
-                <AvatarBubble initials={initials} size="md" />
-                <div>
-                  <p className="text-white font-semibold text-sm">{otherName}</p>
-                  <p className="text-slate-600 text-xs">Tap to open chat</p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </>
+    <div className={pageShell}>
+      <div className="max-w-lg mx-auto px-5 pt-10 pb-24">
+        <h1 className="text-3xl font-black text-white mb-10">Messages</h1>
+
+        {matches.length === 0 ? (
+          <div className="py-20 text-center px-8">
+            <div className="text-4xl mb-3">💬</div>
+            <p className="text-pink-100/55 text-sm">
+              No matches yet. Start discovering people!
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {matches.map((match) => {
+              const otherUserId =
+                match.sender_id === myUserId ? match.receiver_id : match.sender_id;
+
+              const otherName =
+                match.sender_id === myUserId
+                  ? match.receiver?.display_name || "Student"
+                  : match.sender?.display_name || "Student";
+
+              const initials = otherName.slice(0, 2).toUpperCase();
+
+              return (
+                <button
+                  key={match.id}
+                  onClick={() => onOpenChat(match.id, otherUserId, otherName)}
+                  className="w-full bg-pink-500/10 border border-pink-200/15 rounded-2xl p-4 backdrop-blur-xl text-left hover:border-pink-300/30 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <AvatarBubble initials={initials} size="md" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-semibold truncate">{otherName}</p>
+                      <p className="text-pink-100/50 text-sm truncate">
+                        Open chat and start talking
+                      </p>
+                    </div>
+                    <ChevronRight size={18} className="text-pink-100/40" />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -995,14 +1170,14 @@ function ChatPage({ matchId, otherUserId, otherName, myUserId, onBack }) {
 
   return (
     <div className="flex flex-col h-screen bg-[#06080f]">
-      <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5 bg-slate-950/90 backdrop-blur flex-shrink-0">
-        <button onClick={onBack} className="text-slate-500 hover:text-white transition-colors">
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5 bg-white-950/90 backdrop-blur flex-shrink-0">
+        <button onClick={onBack} className="text-white-500 hover:text-white transition-colors">
           <ArrowLeft size={20} />
         </button>
         <AvatarBubble initials={initials} size="sm" />
         <div>
           <p className="text-white font-semibold text-sm">{otherName}</p>
-          <p className="text-slate-600 text-[10px]">Study partner</p>
+          <p className="text-white-600 text-[10px]">Study partner</p>
         </div>
       </div>
 
@@ -1010,13 +1185,13 @@ function ChatPage({ matchId, otherUserId, otherName, myUserId, onBack }) {
         {loading ? (
           <div className="flex justify-center pt-10"><Loader2 size={24} className="text-indigo-500 animate-spin" /></div>
         ) : messages.length === 0 ? (
-          <div className="text-center pt-16"><p className="text-slate-500 text-sm">You're matched! Say hello 👋</p></div>
+          <div className="text-center pt-16"><p className="text-pink-100/55 text-sm">You're matched! Say hello 👋</p></div>
         ) : (
           messages.map(m => {
             const isMe = m.sender_id === myUserId;
             return (
               <div key={m.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isMe ? "bg-indigo-600 text-white rounded-br-md" : "bg-slate-800 text-slate-100 rounded-bl-md"}`}>
+                <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isMe ? "bg-pink-600 text-white rounded-br-md" : "bg-white-800 text-white-100 rounded-bl-md"}`}>
                   {m.content}
                 </div>
               </div>
@@ -1026,12 +1201,12 @@ function ChatPage({ matchId, otherUserId, otherName, myUserId, onBack }) {
         <div ref={bottomRef} />
       </div>
 
-      <div className="px-5 py-4 border-t border-white/5 bg-slate-950/90 backdrop-blur flex-shrink-0">
+      <div className="px-5 py-4 border-t border-white/5 bg-white-950/90 backdrop-blur flex-shrink-0">
         <div className="flex gap-2 items-end">
           <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKey} rows={1} placeholder="Message…"
-            className="flex-1 bg-slate-800 border border-slate-700 focus:border-indigo-500 text-white text-sm rounded-2xl px-4 py-3 outline-none resize-none transition-colors placeholder-slate-600" />
+            className="flex-1 bg-white-800 border border-white-700 focus:border-pink-500 text-white text-sm rounded-2xl px-4 py-3 outline-none resize-none transition-colors placeholder-white-600" />
           <button onClick={send} disabled={!input.trim() || sending}
-            className="w-11 h-11 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-2xl flex items-center justify-center transition-all flex-shrink-0">
+            className="w-11 h-11 bg-pink-600 hover:bg-pink-500 disabled:opacity-40 text-white rounded-2xl flex items-center justify-center transition-all flex-shrink-0">
             {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
           </button>
         </div>
@@ -1044,51 +1219,63 @@ function ChatPage({ matchId, otherUserId, otherName, myUserId, onBack }) {
 
 function AccountPage({ user, profile, onSignOut, onEditProfile, onOpenNotifications }) {
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Student";
-  const initials    = displayName.slice(0, 2).toUpperCase();
+  const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#06080f] text-white pb-28">
+    <div className="min-h-screen bg-gradient-to-br from-rose-950 via-fuchsia-950 to-pink-950 text-white pb-28">
       <div className="max-w-lg mx-auto px-5 pt-10">
-        <p className="text-indigo-400 text-xs font-bold uppercase tracking-widest mb-1">Account</p>
+        <p className="text-pink-400 text-xs font-bold uppercase tracking-widest mb-1">Account</p>
         <h1 className="text-3xl font-black mb-8">Your Profile</h1>
 
-        <Card className="p-6 mb-4 text-center">
-          <div className="flex justify-center"><AvatarBubble initials={initials} size="lg" /></div>
+        <Card className="p-6 mb-4 text-center bg-pink-500/10 border border-pink-200/15 backdrop-blur-xl">
+          <div className="flex justify-center">
+            <AvatarBubble initials={initials} size="lg" />
+          </div>
+
           <h2 className="text-xl font-black mt-4 text-white">{displayName}</h2>
-          <p className="text-slate-500 text-sm mt-1">{user?.email}</p>
+          <p className="text-pink-100/55 text-sm mt-1">{user?.email}</p>
+
           {profile && (
             <div className="flex flex-wrap justify-center gap-2 mt-4">
-              {profile.program            && <Tag>{profile.program}</Tag>}
-              {profile.year               && <Tag>{profile.year}</Tag>}
+              {profile.program && <Tag>{profile.program}</Tag>}
+              {profile.year && <Tag>{profile.year}</Tag>}
               {profile.meeting_preference && <Tag>{profile.meeting_preference}</Tag>}
-              {(profile.courses || []).slice(0, 3).map(c => <Tag key={c}>{c}</Tag>)}
+              {(profile.courses || []).slice(0, 3).map((c) => (
+                <Tag key={c}>{c}</Tag>
+              ))}
             </div>
           )}
         </Card>
 
-        <Card className="mb-4 divide-y divide-white/5">
+        <Card className="mb-4 divide-y divide-pink-200/10 bg-pink-500/10 border border-pink-200/15 backdrop-blur-xl">
           {[
-            { label:"Edit Study Preferences", icon:Settings, action: onEditProfile },
-            { label:"Notifications",          icon:Bell,     action: onOpenNotifications },
+            { label: "Edit Study Preferences", icon: Settings, action: onEditProfile },
+            { label: "Notifications", icon: Bell, action: onOpenNotifications },
           ].map(({ label, icon: Icon, action }) => (
-            <button key={label} onClick={action} className="flex items-center justify-between w-full px-5 py-4 hover:bg-white/5 transition-colors">
+            <button
+              key={label}
+              onClick={action}
+              className="flex items-center justify-between w-full px-5 py-4 hover:bg-white/5 transition-colors"
+            >
               <div className="flex items-center gap-3">
-                <Icon size={15} className="text-indigo-400" />
+                <Icon size={15} className="text-pink-400" />
                 <span className="text-white text-sm">{label}</span>
               </div>
-              <ChevronRight size={15} className="text-slate-600" />
+              <ChevronRight size={15} className="text-pink-100/35" />
             </button>
           ))}
         </Card>
 
-        <button onClick={onSignOut} className="w-full flex items-center justify-center gap-2 border border-red-500/20 hover:bg-red-500/5 text-red-400 font-semibold py-3 rounded-2xl transition-all text-sm">
+        <button
+          onClick={onSignOut}
+          className="w-full flex items-center justify-center gap-2 border border-red-500/20 hover:bg-red-500/5 text-red-400 font-semibold py-3 rounded-2xl transition-all text-sm"
+        >
           <LogOut size={15} /> Sign Out
         </button>
       </div>
     </div>
   );
 }
-
 // ─── ROOT APP ────────────────────────────────────────────────────────────────
 
 export default function StudySyncApp() {
@@ -1168,7 +1355,7 @@ export default function StudySyncApp() {
   const showNav = authUser && !["landing","login","onboarding","chat"].includes(page);
 
   return (
-    <div className="font-sans min-h-screen bg-[#06080f] text-white">
+    <div className="font-sans min-h-screen bg-gradient-to-br from-rose-950 via-fuchsia-950 to-pink-950 text-white">
       {page === "landing" && <LandingPage onGetStarted={() => setPage("login")} />}
       {page === "login"   && <LoginPage   onAuthSuccess={handleAuthSuccess} />}
 
@@ -1179,9 +1366,9 @@ export default function StudySyncApp() {
       {page === "browse" && (
         <div className="pb-28 pt-10">
           <div className="max-w-lg mx-auto px-5 mb-6">
-            <p className="text-indigo-400 text-xs font-bold uppercase tracking-widest mb-1">Discover</p>
+            <p className="text-pink-400 text-xs font-bold uppercase tracking-widest mb-1">Discover</p>
             <h1 className="text-3xl font-black">Find your people</h1>
-            <p className="text-slate-500 text-sm mt-1">Ranked by availability, courses & goals.</p>
+            <p className="text-pink-100/55 text-sm mt-1">Ranked by availability, courses & goals.</p>
           </div>
           <BrowseMatchesPage myProfile={myProfile} myUserId={authUser?.id} />
         </div>
@@ -1195,11 +1382,11 @@ export default function StudySyncApp() {
       )}
 
       {page === "chats" && (
-        <div className="max-w-lg mx-auto px-5 pt-10 pb-28">
-          <h1 className="text-2xl font-black mb-6">Messages</h1>
-          <ChatsListPage myUserId={authUser?.id} onOpenChat={openChat} />
-        </div>
-      )}
+  <div className="max-w-lg mx-auto px-5 pt-10 pb-28">
+    <h1 className="text-2xl font-black mb-6">Messages</h1>
+    <ChatsListPage myUserId={authUser?.id} onOpenChat={openChat} />
+  </div>
+)}
 
       {page === "chat" && activeChat && (
         <ChatPage
