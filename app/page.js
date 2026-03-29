@@ -271,7 +271,7 @@ function LandingPage({ onGetStarted }) {
 
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center pb-16">
         <div className="inline-flex items-center gap-2 bg-pink-500/10 border border-pink-400/20 rounded-full px-4 py-1.5 text-pink-300 text-xs font-medium mb-8">
-          <Heart size={12} className="text-amber-400 fill-amber-400" /> Made for Laurier study matches
+          <Heart size={12} className="text-yellow-400 fill-violet-800" /> Made for Laurier study matches
         </div>
 
         <h1 className="text-5xl md:text-6xl font-black mb-5 leading-[1.05] tracking-tight max-w-4xl">
