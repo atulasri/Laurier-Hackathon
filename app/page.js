@@ -6,8 +6,9 @@ import {
   BookOpen, Calendar, ArrowRight, ArrowLeft, Check,
   ChevronRight, Clock, Zap, LogOut, User,
   Settings, Bell, Eye, EyeOff, Loader2,
-  Heart, X, Send, MessageCircle, Target, MapPin,
-  ChevronDown, ChevronUp, Users, Star, Search
+  Heart, X, Send, MessageCircle, Target,
+  ChevronDown, ChevronUp, Star, UserPlus,
+  Users, Plus, Trash2
 } from "lucide-react";
 
 // ─── LAURIER DATA ────────────────────────────────────────────────────────────
@@ -93,46 +94,40 @@ const GENDERS          = ["Man","Woman","Non-binary","Prefer not to say"];
 const GENDER_PREFS     = ["No preference","Men only","Women only","Non-binary only","Men & Women","Any"];
 const AVAILABILITY_SLOTS = ["Mon Morning","Mon Afternoon","Mon Evening","Tue Morning","Tue Afternoon","Tue Evening","Wed Morning","Wed Afternoon","Wed Evening","Thu Morning","Thu Afternoon","Thu Evening","Fri Morning","Fri Afternoon","Fri Evening","Sat Morning","Sat Afternoon","Sat Evening","Sun Morning","Sun Afternoon","Sun Evening"];
 
+// Every course across all programs, deduplicated and sorted
+const ALL_COURSES = [...new Set(Object.values(COURSES_BY_PROGRAM).flat())].sort();
+
 // ─── MATCHING LOGIC ──────────────────────────────────────────────────────────
 
 function scoreMatch(myProfile, theirProfile) {
   const sharedCourses = (myProfile.courses || []).filter(c => (theirProfile.courses || []).includes(c));
   if (sharedCourses.length === 0) return 0;
   let score = 0;
-
-  const mySlots      = new Set(myProfile.availability || []);
-  const theirSlots   = theirProfile.availability || [];
-  const overlapCount = theirSlots.filter(s => mySlots.has(s)).length;
-  const maxSlots     = Math.max(mySlots.size, theirSlots.length, 1);
-  score += (overlapCount / maxSlots) * 30;
-
+  const mySlots = new Set(myProfile.availability || []);
+  const theirSlots = theirProfile.availability || [];
+  score += (theirSlots.filter(s => mySlots.has(s)).length / Math.max(mySlots.size, theirSlots.length, 1)) * 30;
   if (myProfile.meeting_preference && theirProfile.meeting_preference) {
     if (myProfile.meeting_preference === theirProfile.meeting_preference) score += 25;
     else if (myProfile.meeting_preference === "Hybrid" || theirProfile.meeting_preference === "Hybrid") score += 12;
   }
-
-  const myMotivs     = new Set(myProfile.motivations || []);
-  const theirMotivs  = theirProfile.motivations || [];
-  const motivOverlap = theirMotivs.filter(m => myMotivs.has(m)).length;
-  const maxMotivs    = Math.max(myMotivs.size, theirMotivs.length, 1);
-  score += (motivOverlap / maxMotivs) * 20;
-
+  const myMotivs = new Set(myProfile.motivations || []);
+  const theirMotivs = theirProfile.motivations || [];
+  score += (theirMotivs.filter(m => myMotivs.has(m)).length / Math.max(myMotivs.size, theirMotivs.length, 1)) * 20;
   score += Math.min(sharedCourses.length / Math.max((myProfile.courses || []).length, 1), 1) * 15;
   if (myProfile.year    && myProfile.year    === theirProfile.year)    score += 5;
   if (myProfile.program && myProfile.program === theirProfile.program) score += 5;
-
   return Math.min(Math.round(score), 100);
 }
 
 function meetsGenderPreference(myProfile, theirProfile) {
   const pref = myProfile.gender_preference;
   if (!pref || pref === "No preference" || pref === "Any") return true;
-  const theirGender = theirProfile.gender;
-  if (!theirGender) return true;
-  if (pref === "Men only")        return theirGender === "Man";
-  if (pref === "Women only")      return theirGender === "Woman";
-  if (pref === "Non-binary only") return theirGender === "Non-binary";
-  if (pref === "Men & Women")     return ["Man","Woman"].includes(theirGender);
+  const g = theirProfile.gender;
+  if (!g) return true;
+  if (pref === "Men only")        return g === "Man";
+  if (pref === "Women only")      return g === "Woman";
+  if (pref === "Non-binary only") return g === "Non-binary";
+  if (pref === "Men & Women")     return ["Man","Woman"].includes(g);
   return true;
 }
 
@@ -191,6 +186,7 @@ function Navbar({ currentPage, onNavigate, unreadCount = 0 }) {
   const tabs = [
     { id:"browse",        label:"Discover",  emoji:"🔍" },
     { id:"notifications", label:"Alerts",    emoji:"🔔", badge: unreadCount },
+    { id:"friends",       label:"Friends",   emoji:"👥" },
     { id:"chats",         label:"Messages",  emoji:"💬" },
     { id:"account",       label:"Profile",   emoji:"👤" },
   ];
@@ -199,11 +195,11 @@ function Navbar({ currentPage, onNavigate, unreadCount = 0 }) {
       {tabs.map(({ id, label, emoji, badge }) => {
         const active = currentPage === id;
         return (
-          <button key={id} onClick={() => onNavigate(id)} className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-all relative ${active ? "text-indigo-400" : "text-slate-600 hover:text-slate-400"}`}>
-            <span className="text-lg leading-none">{emoji}</span>
-            <span className="text-[10px] font-medium">{label}</span>
+          <button key={id} onClick={() => onNavigate(id)} className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-all relative ${active ? "text-indigo-400" : "text-slate-600 hover:text-slate-400"}`}>
+            <span className="text-base leading-none">{emoji}</span>
+            <span className="text-[9px] font-medium">{label}</span>
             {badge > 0 && (
-              <span className="absolute top-2 right-[22%] w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
+              <span className="absolute top-1.5 right-[18%] w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
                 {badge > 9 ? "9+" : badge}
               </span>
             )}
@@ -221,9 +217,7 @@ function LandingPage({ onGetStarted }) {
     <div className="min-h-screen bg-[#06080f] text-white flex flex-col">
       <header className="flex items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <Zap size={15} className="text-white" />
-          </div>
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center"><Zap size={15} className="text-white" /></div>
           <span className="font-black text-lg tracking-tight">StudySync</span>
         </div>
         <button onClick={onGetStarted} className="text-sm text-slate-400 hover:text-white transition-colors">Sign In →</button>
@@ -237,15 +231,11 @@ function LandingPage({ onGetStarted }) {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-400 to-cyan-400">study group</span>
         </h1>
         <p className="text-slate-400 text-lg max-w-sm mx-auto mb-10 leading-relaxed">Match with classmates by course, schedule, and study style. Stop studying alone.</p>
-        <button onClick={onGetStarted} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-4 rounded-2xl transition-all text-base shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5">
+        <button onClick={onGetStarted} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-4 rounded-2xl transition-all text-base shadow-xl shadow-indigo-500/25 hover:-translate-y-0.5">
           Get Matched <ArrowRight size={18} />
         </button>
         <div className="grid grid-cols-3 gap-3 max-w-lg mx-auto mt-16">
-          {[
-            { emoji:"👤", step:"01", title:"Build profile",  desc:"Add courses & schedule" },
-            { emoji:"🔍", step:"02", title:"Get matched",    desc:"Smart compatibility score" },
-            { emoji:"👥", step:"03", title:"Connect",        desc:"Message & study together" },
-          ].map(({ emoji, step, title, desc }) => (
+          {[{emoji:"👤",step:"01",title:"Build profile",desc:"Add courses & schedule"},{emoji:"🔍",step:"02",title:"Get matched",desc:"Smart compatibility score"},{emoji:"👥",step:"03",title:"Connect",desc:"Friends, groups & chat"}].map(({ emoji, step, title, desc }) => (
             <div key={step} className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 text-center">
               <div className="text-2xl mb-2">{emoji}</div>
               <div className="text-indigo-500 text-[10px] font-bold mb-1">{step}</div>
@@ -270,7 +260,6 @@ function LoginPage({ onAuthSuccess }) {
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState("");
   const [info,        setInfo]        = useState("");
-
   const isSignUp = mode === "signup";
 
   const handleSubmit = async () => {
@@ -279,21 +268,12 @@ function LoginPage({ onAuthSuccess }) {
     if (isSignUp && !displayName.trim()) { setError("Please enter your name."); return; }
     if (password.length < 6)            { setError("Password must be at least 6 characters."); return; }
     setLoading(true);
-
     if (isSignUp) {
-      const { data, error: err } = await supabase.auth.signUp({
-        email, password,
-        options: { data: { display_name: displayName.trim() } },
-      });
+      const { data, error: err } = await supabase.auth.signUp({ email, password, options: { data: { display_name: displayName.trim() } } });
       if (err) { setError(err.message); setLoading(false); return; }
-      if (data?.user?.identities?.length === 0) {
-        setError("An account with this email already exists. Try signing in.");
-      } else if (data?.session) {
-        onAuthSuccess(data.session.user);
-      } else {
-        setInfo("Account created! Check your email to confirm, then sign in.");
-        setMode("signin");
-      }
+      if (data?.user?.identities?.length === 0) setError("An account with this email already exists.");
+      else if (data?.session) onAuthSuccess(data.session.user);
+      else { setInfo("Account created! Check your email to confirm, then sign in."); setMode("signin"); }
     } else {
       const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
       if (err) { setError(err.message); setLoading(false); return; }
@@ -306,41 +286,26 @@ function LoginPage({ onAuthSuccess }) {
     <div className="min-h-screen bg-[#06080f] flex items-center justify-center px-5">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-indigo-500/30">
-            <Zap size={24} className="text-white" />
-          </div>
+          <div className="w-14 h-14 bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-indigo-500/30"><Zap size={24} className="text-white" /></div>
           <h1 className="text-2xl font-black text-white">{isSignUp ? "Create your account" : "Welcome back"}</h1>
           <p className="text-slate-500 text-sm mt-1">{isSignUp ? "Join StudySync with your student email" : "Sign in to find your study group"}</p>
         </div>
         <Card className="p-6 space-y-4">
-          {isSignUp && (
-            <InputField label="Your Name" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="e.g. Alex Chen" />
-          )}
+          {isSignUp && <InputField label="Your Name" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="e.g. Alex Chen" />}
           <InputField label="Student Email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@mylaurier.ca" />
-          <InputField
-            label="Password"
-            type={showPass ? "text" : "password"}
-            value={password}
-            onChange={e => setPassword(e.target.value)}
+          <InputField label="Password" type={showPass ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
             placeholder={isSignUp ? "Choose a password (6+ chars)" : "Your password"}
-            rightElement={
-              <button onClick={() => setShowPass(p => !p)} className="text-slate-500 hover:text-slate-300 transition-colors">
-                {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            }
-          />
+            rightElement={<button onClick={() => setShowPass(p => !p)} className="text-slate-500 hover:text-slate-300 transition-colors">{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button>} />
           {error && <div className="bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-2.5 text-red-400 text-xs">{error}</div>}
           {info  && <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-xl px-4 py-2.5 text-emerald-400 text-xs">{info}</div>}
-          <button onClick={handleSubmit} disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all text-sm shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2">
+          <button onClick={handleSubmit} disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all text-sm flex items-center justify-center gap-2">
             {loading && <Loader2 size={16} className="animate-spin" />}
             {loading ? "Please wait…" : isSignUp ? "Create Account" : "Sign In →"}
           </button>
         </Card>
         <p className="text-center text-slate-500 text-sm mt-5">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-          <button onClick={() => { setMode(isSignUp ? "signin" : "signup"); setError(""); setInfo(""); }} className="text-indigo-400 hover:text-indigo-300 font-semibold transition-colors">
-            {isSignUp ? "Sign in" : "Sign up"}
-          </button>
+          <button onClick={() => { setMode(isSignUp ? "signin" : "signup"); setError(""); setInfo(""); }} className="text-indigo-400 hover:text-indigo-300 font-semibold">{isSignUp ? "Sign in" : "Sign up"}</button>
         </p>
         <p className="text-center text-slate-700 text-xs mt-3">Powered by Supabase Auth · data is real and saved</p>
       </div>
@@ -348,7 +313,7 @@ function LoginPage({ onAuthSuccess }) {
   );
 }
 
-// ─── ONBOARDING: SHARED SUB-COMPONENTS ───────────────────────────────────────
+// ─── ONBOARDING ───────────────────────────────────────────────────────────────
 
 const TOTAL_STEPS = 6;
 
@@ -360,10 +325,7 @@ function StepHeader({ step, title, subtitle, icon: Icon }) {
           <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${i < step ? "bg-indigo-500" : "bg-slate-800"}`} />
         ))}
       </div>
-      <div className="flex items-center gap-2 mb-1">
-        <Icon size={15} className="text-indigo-400" />
-        <span className="text-indigo-400 text-xs font-bold uppercase tracking-widest">Step {step} of {TOTAL_STEPS}</span>
-      </div>
+      <div className="flex items-center gap-2 mb-1"><Icon size={15} className="text-indigo-400" /><span className="text-indigo-400 text-xs font-bold uppercase tracking-widest">Step {step} of {TOTAL_STEPS}</span></div>
       <h2 className="text-2xl font-black text-white">{title}</h2>
       {subtitle && <p className="text-slate-500 text-sm mt-1">{subtitle}</p>}
     </div>
@@ -373,19 +335,105 @@ function StepHeader({ step, title, subtitle, icon: Icon }) {
 function NavButtons({ onBack, onNext, canNext, nextLabel = "Continue" }) {
   return (
     <div className="flex gap-3 mt-6">
-      {onBack && (
-        <button onClick={onBack} className="flex items-center gap-1.5 px-5 py-3 rounded-xl border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 transition-all text-sm font-medium">
-          <ArrowLeft size={15} /> Back
-        </button>
-      )}
-      <button onClick={onNext} disabled={!canNext} className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all text-sm shadow-lg shadow-indigo-500/20">
+      {onBack && <button onClick={onBack} className="flex items-center gap-1.5 px-5 py-3 rounded-xl border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 transition-all text-sm font-medium"><ArrowLeft size={15} /> Back</button>}
+      <button onClick={onNext} disabled={!canNext} className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all text-sm">
         {nextLabel} <ArrowRight size={16} />
       </button>
     </div>
   );
 }
 
-// ─── ONBOARDING FLOW ─────────────────────────────────────────────────────────
+// ─── COURSE PICKER STEP ──────────────────────────────────────────────────────
+
+function CoursePickerStep({ courses, setCourses, program, onBack, onNext }) {
+  const [search,      setSearch]      = useState("");
+  const [customInput, setCustomInput] = useState("");
+  const [showAll,     setShowAll]     = useState(false);
+
+  const programCourses = COURSES_BY_PROGRAM[program] || [];
+  const pool = showAll || programCourses.length === 0 ? ALL_COURSES : programCourses;
+  const filtered = search.trim()
+    ? ALL_COURSES.filter(c => c.toLowerCase().includes(search.toLowerCase()))
+    : pool;
+
+  const toggleCourse = c =>
+    setCourses(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
+
+  const addCustom = () => {
+    const val = customInput.trim().toUpperCase().replace(/\s+/g, "");
+    if (!val) return;
+    if (!courses.includes(val)) setCourses(prev => [...prev, val]);
+    setCustomInput("");
+  };
+
+  return (
+    <div>
+      <StepHeader step={3} icon={BookOpen} title="Which courses are you in?" subtitle="Select from the list or type any course code." />
+
+      {/* Search */}
+      <div className="relative mb-3">
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search course codes…"
+          className="w-full bg-slate-800 border border-slate-700 focus:border-indigo-500 text-white rounded-xl px-4 py-2.5 text-sm outline-none transition-colors placeholder-slate-600 pr-10" />
+        {search && <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"><X size={14} /></button>}
+      </div>
+
+      {/* Toggle all / program only */}
+      {programCourses.length > 0 && !search && (
+        <button onClick={() => setShowAll(a => !a)}
+          className="text-indigo-400 hover:text-indigo-300 text-xs font-semibold mb-3 flex items-center gap-1 transition-colors">
+          {showAll ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          {showAll ? `Show ${program} courses only` : "Browse all Laurier courses"}
+        </button>
+      )}
+
+      {!search && (
+        <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest mb-2">
+          {showAll || programCourses.length === 0 ? "All Laurier Courses" : `${program} Courses`}
+        </p>
+      )}
+
+      {/* Course chips */}
+      <div className="flex flex-wrap gap-2 max-h-[35vh] overflow-y-auto pr-1 mb-4">
+        {filtered.length === 0
+          ? <p className="text-slate-600 text-sm">No matches for "{search}". Add it manually below.</p>
+          : filtered.map(c => <Chip key={c} selected={courses.includes(c)} onClick={() => toggleCourse(c)}>{c}</Chip>)
+        }
+      </div>
+
+      {/* Custom course input */}
+      <div className="mb-1">
+        <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">Add any course manually</p>
+        <div className="flex gap-2">
+          <input value={customInput} onChange={e => setCustomInput(e.target.value.toUpperCase())}
+            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCustom(); }}}
+            placeholder="e.g. CP999" maxLength={8}
+            className="flex-1 bg-slate-800 border border-slate-700 focus:border-indigo-500 text-white rounded-xl px-4 py-2.5 text-sm outline-none transition-colors placeholder-slate-600" />
+          <button onClick={addCustom} disabled={!customInput.trim()}
+            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 text-white text-sm font-bold rounded-xl transition-all flex-shrink-0">
+            Add
+          </button>
+        </div>
+      </div>
+
+      {/* Selected summary — tap to remove */}
+      {courses.length > 0 && (
+        <div className="mt-3">
+          <p className="text-indigo-400 text-xs font-semibold mb-2">{courses.length} selected (tap to remove):</p>
+          <div className="flex flex-wrap gap-1.5">
+            {courses.map(c => (
+              <button key={c} onClick={() => toggleCourse(c)}
+                className="flex items-center gap-1 text-xs bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-full hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-all">
+                {c} <X size={10} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <NavButtons onBack={onBack} onNext={onNext} canNext={courses.length > 0} />
+    </div>
+  );
+}
 
 function OnboardingFlow({ savedProfile, onComplete }) {
   const s = savedProfile || {};
@@ -399,126 +447,43 @@ function OnboardingFlow({ savedProfile, onComplete }) {
   const [gender,       setGender]       = useState(s.gender             || "");
   const [genderPref,   setGenderPref]   = useState(s.gender_preference  || "No preference");
   const [saving,       setSaving]       = useState(false);
-
-  const toggleArr = (setter, val) =>
-    setter(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
-
-  const finish = async () => {
-    setSaving(true);
-    await onComplete({ program, year, courses, motivations, meeting_preference: meetingPref, availability, gender, gender_preference: genderPref });
-    setSaving(false);
-  };
-
-  const availableCourses = COURSES_BY_PROGRAM[program] || [];
+  const toggleArr = (setter, val) => setter(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
+  const finish = async () => { setSaving(true); await onComplete({ program, year, courses, motivations, meeting_preference: meetingPref, availability, gender, gender_preference: genderPref }); setSaving(false); };
 
   return (
     <div className="min-h-screen bg-[#06080f] text-white pb-10">
       <div className="max-w-lg mx-auto px-5 pt-10">
-        <div className="flex items-center gap-2 mb-8">
-          <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <Zap size={13} className="text-white" />
-          </div>
-          <span className="font-black text-base tracking-tight">StudySync</span>
-        </div>
+        <div className="flex items-center gap-2 mb-8"><div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center"><Zap size={13} className="text-white" /></div><span className="font-black text-base tracking-tight">StudySync</span></div>
 
-        {step === 1 && (
-          <div>
-            <StepHeader step={1} icon={User} title="What's your program?" subtitle="Select your degree at Laurier." />
-            <div className="space-y-5 max-h-[55vh] overflow-y-auto pr-1">
-              {Object.entries(PROGRAMS_BY_FACULTY).map(([faculty, programs]) => (
-                <div key={faculty}>
-                  <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest mb-2">{faculty}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {programs.map(p => <Chip key={p} selected={program === p} onClick={() => setProgram(p)}>{p}</Chip>)}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <NavButtons onNext={() => setStep(2)} canNext={!!program} />
-          </div>
-        )}
+        {step === 1 && <div><StepHeader step={1} icon={User} title="What's your program?" subtitle="Select your degree at Laurier." />
+          <div className="space-y-5 max-h-[55vh] overflow-y-auto pr-1">{Object.entries(PROGRAMS_BY_FACULTY).map(([faculty, programs]) => (<div key={faculty}><p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest mb-2">{faculty}</p><div className="flex flex-wrap gap-2">{programs.map(p => <Chip key={p} selected={program === p} onClick={() => setProgram(p)}>{p}</Chip>)}</div></div>))}</div>
+          <NavButtons onNext={() => setStep(2)} canNext={!!program} /></div>}
 
-        {step === 2 && (
-          <div>
-            <StepHeader step={2} icon={User} title="What year are you in?" subtitle="Helps match you with students at a similar stage." />
-            <div className="flex flex-wrap gap-3">
-              {YEARS.map(y => <Chip key={y} selected={year === y} onClick={() => setYear(y)}>{y}</Chip>)}
-            </div>
-            <NavButtons onBack={() => setStep(1)} onNext={() => setStep(3)} canNext={!!year} />
-          </div>
-        )}
+        {step === 2 && <div><StepHeader step={2} icon={User} title="What year are you in?" subtitle="Helps match you with students at a similar stage." />
+          <div className="flex flex-wrap gap-3">{YEARS.map(y => <Chip key={y} selected={year === y} onClick={() => setYear(y)}>{y}</Chip>)}</div>
+          <NavButtons onBack={() => setStep(1)} onNext={() => setStep(3)} canNext={!!year} /></div>}
 
-        {step === 3 && (
-          <div>
-            <StepHeader step={3} icon={BookOpen} title="Which courses are you in?" subtitle={`Select your current ${program} courses.`} />
-            {availableCourses.length === 0 ? (
-              <p className="text-slate-500 text-sm">No preset courses for this program. You can add them later in settings.</p>
-            ) : (
-              <>
-                <div className="flex flex-wrap gap-2 max-h-[50vh] overflow-y-auto pr-1">
-                  {availableCourses.map(c => (
-                    <Chip key={c} selected={courses.includes(c)} onClick={() => toggleArr(setCourses, c)}>{c}</Chip>
-                  ))}
-                </div>
-                {courses.length > 0 && <p className="text-indigo-400 text-xs mt-3">{courses.length} course{courses.length > 1 ? "s" : ""} selected</p>}
-              </>
-            )}
-            <NavButtons onBack={() => setStep(2)} onNext={() => setStep(4)} canNext={courses.length > 0} />
-          </div>
-        )}
+        {step === 3 && <CoursePickerStep courses={courses} setCourses={setCourses} program={program} onBack={() => setStep(2)} onNext={() => setStep(4)} />}
 
-        {step === 4 && (
-          <div>
-            <StepHeader step={4} icon={Target} title="Why do you want to study?" subtitle="Pick everything that applies. You'll match with people who share your goals." />
-            <div className="flex flex-wrap gap-2">
-              {MOTIVATIONS.map(m => (
-                <Chip key={m} selected={motivations.includes(m)} onClick={() => toggleArr(setMotivations, m)}>{m}</Chip>
-              ))}
-            </div>
-            {motivations.length > 0 && <p className="text-indigo-400 text-xs mt-3">{motivations.length} selected</p>}
-            <NavButtons onBack={() => setStep(3)} onNext={() => setStep(5)} canNext={motivations.length > 0} />
-          </div>
-        )}
+        {step === 4 && <div><StepHeader step={4} icon={Target} title="Why do you want to study?" subtitle="Pick everything that applies." />
+          <div className="flex flex-wrap gap-2">{MOTIVATIONS.map(m => <Chip key={m} selected={motivations.includes(m)} onClick={() => toggleArr(setMotivations, m)}>{m}</Chip>)}</div>
+          {motivations.length > 0 && <p className="text-indigo-400 text-xs mt-3">{motivations.length} selected</p>}
+          <NavButtons onBack={() => setStep(3)} onNext={() => setStep(5)} canNext={motivations.length > 0} /></div>}
 
-        {step === 5 && (
-          <div>
-            <StepHeader step={5} icon={Calendar} title="Schedule & format" subtitle="Where do you want to meet, and when are you free?" />
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Meeting Format</p>
-            <div className="flex gap-2 mb-6">
-              {["In-Person","Online","Hybrid"].map(p => (
-                <Chip key={p} selected={meetingPref === p} onClick={() => setMeetingPref(p)}>{p}</Chip>
-              ))}
-            </div>
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Availability</p>
-            <div className="flex flex-wrap gap-2 max-h-[38vh] overflow-y-auto pr-1">
-              {AVAILABILITY_SLOTS.map(s => (
-                <Chip key={s} selected={availability.includes(s)} onClick={() => toggleArr(setAvailability, s)}>{s}</Chip>
-              ))}
-            </div>
-            {availability.length > 0 && <p className="text-indigo-400 text-xs mt-3">{availability.length} slot{availability.length > 1 ? "s" : ""} selected</p>}
-            <NavButtons onBack={() => setStep(4)} onNext={() => setStep(6)} canNext={!!meetingPref && availability.length > 0} />
-          </div>
-        )}
+        {step === 5 && <div><StepHeader step={5} icon={Calendar} title="Schedule & format" subtitle="Where do you want to meet, and when are you free?" />
+          <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Meeting Format</p>
+          <div className="flex gap-2 mb-6">{["In-Person","Online","Hybrid"].map(p => <Chip key={p} selected={meetingPref === p} onClick={() => setMeetingPref(p)}>{p}</Chip>)}</div>
+          <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Availability</p>
+          <div className="flex flex-wrap gap-2 max-h-[38vh] overflow-y-auto pr-1">{AVAILABILITY_SLOTS.map(s => <Chip key={s} selected={availability.includes(s)} onClick={() => toggleArr(setAvailability, s)}>{s}</Chip>)}</div>
+          {availability.length > 0 && <p className="text-indigo-400 text-xs mt-3">{availability.length} slots selected</p>}
+          <NavButtons onBack={() => setStep(4)} onNext={() => setStep(6)} canNext={!!meetingPref && availability.length > 0} /></div>}
 
-        {step === 6 && (
-          <div>
-            <StepHeader step={6} icon={User} title="A couple more things" subtitle="Optional — helps with comfort and preferences." />
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Your Gender</p>
-            <div className="flex flex-wrap gap-2 mb-6">
-              {GENDERS.map(g => <Chip key={g} selected={gender === g} onClick={() => setGender(g)}>{g}</Chip>)}
-            </div>
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Study Partner Gender Preference</p>
-            <div className="flex flex-wrap gap-2">
-              {GENDER_PREFS.map(p => <Chip key={p} selected={genderPref === p} onClick={() => setGenderPref(p)}>{p}</Chip>)}
-            </div>
-            <NavButtons
-              onBack={() => setStep(5)}
-              onNext={finish}
-              canNext={true}
-              nextLabel={saving ? "Saving…" : "Find My Matches ✦"}
-            />
-          </div>
-        )}
+        {step === 6 && <div><StepHeader step={6} icon={User} title="A couple more things" subtitle="Optional — helps with comfort and preferences." />
+          <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Your Gender</p>
+          <div className="flex flex-wrap gap-2 mb-6">{GENDERS.map(g => <Chip key={g} selected={gender === g} onClick={() => setGender(g)}>{g}</Chip>)}</div>
+          <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Study Partner Gender Preference</p>
+          <div className="flex flex-wrap gap-2">{GENDER_PREFS.map(p => <Chip key={p} selected={genderPref === p} onClick={() => setGenderPref(p)}>{p}</Chip>)}</div>
+          <NavButtons onBack={() => setStep(5)} onNext={finish} canNext={true} nextLabel={saving ? "Saving…" : "Find My Matches ✦"} /></div>}
       </div>
     </div>
   );
@@ -532,7 +497,9 @@ function BrowseMatchesPage({ myProfile, myUserId }) {
   const [loading,       setLoading]       = useState(true);
   const [expanded,      setExpanded]      = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [friendLoading, setFriendLoading] = useState(false);
   const [toast,         setToast]         = useState(null);
+  const [friendedIds,   setFriendedIds]   = useState(new Set());
 
   useEffect(() => {
     if (!myProfile) return;
@@ -542,22 +509,28 @@ function BrowseMatchesPage({ myProfile, myUserId }) {
       const { data: profiles } = await supabase.from("profiles").select("*").neq("id", myUserId);
 
       const { data: existingMatches } = await supabase
-        .from("matches")
-        .select("sender_id, receiver_id, status, updated_at")
+        .from("matches").select("sender_id, receiver_id, status, updated_at")
+        .or(`sender_id.eq.${myUserId},receiver_id.eq.${myUserId}`);
+
+      const { data: existingFriends } = await supabase
+        .from("friendships").select("sender_id, receiver_id, status")
         .or(`sender_id.eq.${myUserId},receiver_id.eq.${myUserId}`);
 
       const excludeIds = new Set();
       const TWO_WEEKS  = 14 * 24 * 60 * 60 * 1000;
       const now        = Date.now();
-
       (existingMatches || []).forEach(m => {
         const otherId = m.sender_id === myUserId ? m.receiver_id : m.sender_id;
-        if (m.status === "accepted" || m.status === "pending") {
-          excludeIds.add(otherId);
-        } else if (m.status === "declined") {
-          if (now - new Date(m.updated_at).getTime() < TWO_WEEKS) excludeIds.add(otherId);
-        }
+        if (m.status === "accepted" || m.status === "pending") excludeIds.add(otherId);
+        else if (m.status === "declined" && now - new Date(m.updated_at).getTime() < TWO_WEEKS) excludeIds.add(otherId);
       });
+
+      const fIds = new Set();
+      (existingFriends || []).forEach(f => {
+        const otherId = f.sender_id === myUserId ? f.receiver_id : f.sender_id;
+        fIds.add(otherId);
+      });
+      setFriendedIds(fIds);
 
       const scored = (profiles || [])
         .filter(p => !excludeIds.has(p.id))
@@ -576,26 +549,32 @@ function BrowseMatchesPage({ myProfile, myUserId }) {
   const sendMatchRequest = async (toProfile) => {
     setActionLoading(true);
     const { data: match, error } = await supabase
-      .from("matches")
-      .insert({ sender_id: myUserId, receiver_id: toProfile.id, status: "pending" })
-      .select().single();
-
+      .from("matches").insert({ sender_id: myUserId, receiver_id: toProfile.id, status: "pending" }).select().single();
     if (!error && match) {
-      await supabase.from("notifications").insert({
-        user_id: toProfile.id, type: "match_request",
-        from_user_id: myUserId, match_id: match.id,
-      });
-      showToast(`Match request sent to ${toProfile.display_name || "them"}! 🎉`);
+      await supabase.from("notifications").insert({ user_id: toProfile.id, type: "match_request", from_user_id: myUserId, match_id: match.id });
+      showToast(`Study request sent to ${toProfile.display_name || "them"}! 🎉`);
     }
     setActionLoading(false);
     setIdx(i => i + 1);
     setExpanded(false);
   };
 
+  const sendFriendRequest = async (toProfile) => {
+    if (friendedIds.has(toProfile.id)) { showToast("Friend request already sent!"); return; }
+    setFriendLoading(true);
+    const { data: friendship, error } = await supabase
+      .from("friendships").insert({ sender_id: myUserId, receiver_id: toProfile.id, status: "pending" }).select().single();
+    if (!error && friendship) {
+      await supabase.from("notifications").insert({ user_id: toProfile.id, type: "friend_request", from_user_id: myUserId, match_id: friendship.id });
+      setFriendedIds(prev => new Set([...prev, toProfile.id]));
+      showToast(`Friend request sent to ${toProfile.display_name || "them"}! 👋`);
+    }
+    setFriendLoading(false);
+  };
+
   const skip = () => { setIdx(i => i + 1); setExpanded(false); };
 
   if (loading) return <div className="flex items-center justify-center py-24"><Loader2 size={28} className="text-indigo-500 animate-spin" /></div>;
-
   if (!myProfile?.courses?.length) return <div className="py-20 text-center px-8"><p className="text-slate-400 text-sm">Complete your profile to see matches.</p></div>;
 
   const current = candidates[idx];
@@ -605,20 +584,19 @@ function BrowseMatchesPage({ myProfile, myUserId }) {
       <div className="py-20 text-center px-8">
         <div className="text-5xl mb-4">🎓</div>
         <h3 className="text-white font-bold text-lg mb-2">You've seen everyone!</h3>
-        <p className="text-slate-500 text-sm max-w-xs mx-auto">New students join every day. Check back soon, or update your courses to expand your matches.</p>
+        <p className="text-slate-500 text-sm max-w-xs mx-auto">New students join every day. Check back soon.</p>
       </div>
     );
   }
 
   const initials      = (current.display_name || "??").slice(0, 2).toUpperCase();
   const sharedCourses = (myProfile.courses || []).filter(c => (current.courses || []).includes(c));
+  const alreadyFriended = friendedIds.has(current.id);
 
   return (
     <div className="relative max-w-lg mx-auto px-5 pb-6">
       {toast && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white text-sm font-semibold px-5 py-2.5 rounded-2xl shadow-xl animate-bounce">
-          {toast}
-        </div>
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white text-sm font-semibold px-5 py-2.5 rounded-2xl shadow-xl animate-bounce">{toast}</div>
       )}
 
       <div className="flex items-center justify-between mb-4">
@@ -633,7 +611,6 @@ function BrowseMatchesPage({ myProfile, myUserId }) {
           <p className="text-slate-400 text-sm mt-0.5">{current.program} · {current.year}</p>
           {current.bio && <p className="text-slate-300 text-sm mt-3 leading-relaxed max-w-xs">{current.bio}</p>}
         </div>
-
         <div className="px-6 pb-5 space-y-4">
           <div>
             <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest mb-2">Shared Courses</p>
@@ -650,27 +627,42 @@ function BrowseMatchesPage({ myProfile, myUserId }) {
             <span>🕐 {(current.availability || []).length} slots free</span>
           </div>
           <button onClick={() => setExpanded(e => !e)} className="flex items-center gap-1 text-indigo-400 text-xs font-medium">
-            {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-            {expanded ? "Hide" : "Show"} availability
+            {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />} {expanded ? "Hide" : "Show"} availability
           </button>
           {expanded && <div className="flex flex-wrap gap-1.5">{(current.availability || []).map(s => <Tag key={s}>{s}</Tag>)}</div>}
         </div>
       </div>
 
+      {/* Primary actions */}
       <div className="flex gap-3 mt-4">
         <button onClick={skip} disabled={actionLoading} className="flex-1 flex items-center justify-center gap-2 border border-slate-700 hover:border-red-500/40 hover:bg-red-500/5 text-slate-400 hover:text-red-400 font-semibold py-3.5 rounded-2xl transition-all">
           <X size={18} /> Skip
         </button>
         <button onClick={() => sendMatchRequest(current)} disabled={actionLoading} className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-indigo-500/20">
-          {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <Heart size={18} />}
-          Match
+          {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <Heart size={18} />} Match
+        </button>
+      </div>
+
+      {/* Friend request — secondary action */}
+      <div className="flex justify-center mt-3">
+        <button
+          onClick={() => sendFriendRequest(current)}
+          disabled={friendLoading || alreadyFriended}
+          className={`flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl transition-all border ${
+            alreadyFriended
+              ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/5 cursor-default"
+              : "border-slate-700 hover:border-indigo-500/40 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/5"
+          }`}
+        >
+          {friendLoading ? <Loader2 size={12} className="animate-spin" /> : <UserPlus size={13} />}
+          {alreadyFriended ? "Friend request sent" : "Add Friend"}
         </button>
       </div>
     </div>
   );
 }
 
-// ─── PAGE: NOTIFICATIONS (INBOX + PENDING TABS) ───────────────────────────────
+// ─── PAGE: NOTIFICATIONS ─────────────────────────────────────────────────────
 
 function NotificationsPage({ myUserId, onOpenChat }) {
   const [tab,           setTab]           = useState("inbox");
@@ -682,8 +674,7 @@ function NotificationsPage({ myUserId, onOpenChat }) {
     const { data } = await supabase
       .from("notifications")
       .select("*, from_profile:from_user_id(display_name, program, year)")
-      .eq("user_id", myUserId)
-      .order("created_at", { ascending: false });
+      .eq("user_id", myUserId).order("created_at", { ascending: false });
     setNotifications(data || []);
   };
 
@@ -691,29 +682,21 @@ function NotificationsPage({ myUserId, onOpenChat }) {
     const { data } = await supabase
       .from("matches")
       .select("*, receiver:receiver_id(display_name, program, year, courses, meeting_preference)")
-      .eq("sender_id", myUserId)
-      .eq("status", "pending")
-      .order("created_at", { ascending: false });
+      .eq("sender_id", myUserId).eq("status", "pending").order("created_at", { ascending: false });
     setPending(data || []);
   };
 
-  const load = async () => {
-    setLoading(true);
-    await Promise.all([loadInbox(), loadPending()]);
-    setLoading(false);
-  };
+  const load = async () => { setLoading(true); await Promise.all([loadInbox(), loadPending()]); setLoading(false); };
 
   useEffect(() => {
     load();
-    const notifChannel = supabase
-      .channel("notifs:" + myUserId)
+    const notifCh = supabase.channel("notifs:" + myUserId)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${myUserId}` }, () => loadInbox())
       .subscribe();
-    const matchChannel = supabase
-      .channel("pending-matches:" + myUserId)
+    const matchCh = supabase.channel("pending-matches:" + myUserId)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "matches" }, () => loadPending())
       .subscribe();
-    return () => { supabase.removeChannel(notifChannel); supabase.removeChannel(matchChannel); };
+    return () => { supabase.removeChannel(notifCh); supabase.removeChannel(matchCh); };
   }, [myUserId]);
 
   const markRead = async id => {
@@ -724,15 +707,25 @@ function NotificationsPage({ myUserId, onOpenChat }) {
   const acceptMatch = async (notif) => {
     await supabase.from("matches").update({ status: "accepted", updated_at: new Date().toISOString() }).eq("id", notif.match_id);
     await supabase.from("notifications").insert({ user_id: notif.from_user_id, type: "match_accepted", from_user_id: myUserId, match_id: notif.match_id });
-    await markRead(notif.id);
-    load();
+    await markRead(notif.id); load();
   };
 
   const declineMatch = async (notif) => {
     await supabase.from("matches").update({ status: "declined", updated_at: new Date().toISOString() }).eq("id", notif.match_id);
     await supabase.from("notifications").insert({ user_id: notif.from_user_id, type: "match_declined", from_user_id: myUserId, match_id: notif.match_id });
-    await markRead(notif.id);
-    load();
+    await markRead(notif.id); load();
+  };
+
+  const acceptFriend = async (notif) => {
+    // notif.match_id stores the friendship id for friend_request notifications
+    await supabase.from("friendships").update({ status: "accepted", updated_at: new Date().toISOString() }).eq("id", notif.match_id);
+    await supabase.from("notifications").insert({ user_id: notif.from_user_id, type: "friend_accepted", from_user_id: myUserId, match_id: notif.match_id });
+    await markRead(notif.id); loadInbox();
+  };
+
+  const declineFriend = async (notif) => {
+    await supabase.from("friendships").update({ status: "declined", updated_at: new Date().toISOString() }).eq("id", notif.match_id);
+    await markRead(notif.id); loadInbox();
   };
 
   const cancelRequest = async (matchId) => {
@@ -746,40 +739,20 @@ function NotificationsPage({ myUserId, onOpenChat }) {
 
   return (
     <div>
-      {/* Tab switcher */}
       <div className="flex gap-1 bg-slate-900/80 p-1 rounded-xl mb-5 border border-white/5">
-        <button
-          onClick={() => setTab("inbox")}
-          className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${tab === "inbox" ? "bg-indigo-600 text-white shadow" : "text-slate-500 hover:text-slate-300"}`}
-        >
-          Inbox
-          {inboxUnread > 0 && (
-            <span className="w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
-              {inboxUnread > 9 ? "9+" : inboxUnread}
-            </span>
-          )}
+        <button onClick={() => setTab("inbox")} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${tab === "inbox" ? "bg-indigo-600 text-white shadow" : "text-slate-500 hover:text-slate-300"}`}>
+          Inbox {inboxUnread > 0 && <span className="w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">{inboxUnread > 9 ? "9+" : inboxUnread}</span>}
         </button>
-        <button
-          onClick={() => setTab("pending")}
-          className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${tab === "pending" ? "bg-indigo-600 text-white shadow" : "text-slate-500 hover:text-slate-300"}`}
-        >
-          Pending
-          {pending.length > 0 && (
-            <span className={`w-4 h-4 rounded-full text-white text-[9px] font-bold flex items-center justify-center ${tab === "pending" ? "bg-white/20" : "bg-amber-500"}`}>
-              {pending.length}
-            </span>
-          )}
+        <button onClick={() => setTab("pending")} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${tab === "pending" ? "bg-indigo-600 text-white shadow" : "text-slate-500 hover:text-slate-300"}`}>
+          Pending {pending.length > 0 && <span className={`w-4 h-4 rounded-full text-white text-[9px] font-bold flex items-center justify-center ${tab === "pending" ? "bg-white/20" : "bg-amber-500"}`}>{pending.length}</span>}
         </button>
       </div>
 
-      {/* ── INBOX TAB ── */}
+      {/* ── INBOX ── */}
       {tab === "inbox" && (
         <>
           {notifications.length === 0 ? (
-            <div className="py-20 text-center px-8">
-              <div className="text-4xl mb-3">🔔</div>
-              <p className="text-slate-500 text-sm">No notifications yet. Start discovering people!</p>
-            </div>
+            <div className="py-20 text-center px-8"><div className="text-4xl mb-3">🔔</div><p className="text-slate-500 text-sm">No notifications yet. Start discovering people!</p></div>
           ) : (
             <div className="space-y-3">
               {notifications.map(n => {
@@ -791,38 +764,36 @@ function NotificationsPage({ myUserId, onOpenChat }) {
                     <div className="flex items-start gap-3">
                       <AvatarBubble initials={initials} size="sm" />
                       <div className="flex-1 min-w-0">
-                        {n.type === "match_request" && (
-                          <>
-                            <p className="text-white text-sm font-semibold">{name} wants to study with you!</p>
-                            <p className="text-slate-500 text-xs mt-0.5">{n.from_profile?.program} · {n.from_profile?.year}</p>
-                            <div className="flex gap-2 mt-3">
-                              <button onClick={() => acceptMatch(n)} className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all">
-                                <Check size={12} /> Accept
-                              </button>
-                              <button onClick={() => declineMatch(n)} className="flex items-center gap-1.5 border border-slate-700 hover:border-red-500/40 text-slate-400 hover:text-red-400 text-xs font-medium px-3 py-1.5 rounded-xl transition-all">
-                                <X size={12} /> Decline
-                              </button>
-                            </div>
-                          </>
-                        )}
-                        {n.type === "match_accepted" && (
-                          <>
-                            <p className="text-emerald-400 text-sm font-semibold">{name} accepted your match! 🎉</p>
-                            <p className="text-slate-500 text-xs mt-0.5">You can now message each other</p>
-                            <button onClick={() => { markRead(n.id); onOpenChat(n.match_id, n.from_user_id, name); }}
-                              className="flex items-center gap-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-xl mt-3 transition-all">
-                              <MessageCircle size={12} /> Open Chat
-                            </button>
-                          </>
-                        )}
-                        {n.type === "match_declined" && (
-                          <p className="text-slate-400 text-sm">{name} is not available right now. You'll see them again in 2 weeks.</p>
-                        )}
-                        {unread && (
-                          <button onClick={() => markRead(n.id)} className="text-slate-600 hover:text-slate-400 text-[10px] mt-2 transition-colors">
-                            Mark as read
-                          </button>
-                        )}
+                        {/* Study match request */}
+                        {n.type === "match_request" && (<>
+                          <p className="text-white text-sm font-semibold">{name} wants to study with you!</p>
+                          <p className="text-slate-500 text-xs mt-0.5">{n.from_profile?.program} · {n.from_profile?.year}</p>
+                          <div className="flex gap-2 mt-3">
+                            <button onClick={() => acceptMatch(n)} className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all"><Check size={12} /> Accept</button>
+                            <button onClick={() => declineMatch(n)} className="flex items-center gap-1.5 border border-slate-700 hover:border-red-500/40 text-slate-400 hover:text-red-400 text-xs font-medium px-3 py-1.5 rounded-xl transition-all"><X size={12} /> Decline</button>
+                          </div>
+                        </>)}
+                        {n.type === "match_accepted" && (<>
+                          <p className="text-emerald-400 text-sm font-semibold">{name} accepted your study match! 🎉</p>
+                          <p className="text-slate-500 text-xs mt-0.5">You can now message each other</p>
+                          <button onClick={() => { markRead(n.id); onOpenChat(n.match_id, n.from_user_id, name); }} className="flex items-center gap-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-xl mt-3 transition-all"><MessageCircle size={12} /> Open Chat</button>
+                        </>)}
+                        {n.type === "match_declined" && <p className="text-slate-400 text-sm">{name} is not available right now. You'll see them again in 2 weeks.</p>}
+
+                        {/* Friend request */}
+                        {n.type === "friend_request" && (<>
+                          <p className="text-white text-sm font-semibold">{name} sent you a friend request 👋</p>
+                          <p className="text-slate-500 text-xs mt-0.5">{n.from_profile?.program} · {n.from_profile?.year}</p>
+                          <div className="flex gap-2 mt-3">
+                            <button onClick={() => acceptFriend(n)} className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all"><Check size={12} /> Accept</button>
+                            <button onClick={() => declineFriend(n)} className="flex items-center gap-1.5 border border-slate-700 hover:border-red-500/40 text-slate-400 hover:text-red-400 text-xs font-medium px-3 py-1.5 rounded-xl transition-all"><X size={12} /> Decline</button>
+                          </div>
+                        </>)}
+                        {n.type === "friend_accepted" && <p className="text-emerald-400 text-sm font-semibold">{name} accepted your friend request! 🤝</p>}
+                        {n.type === "friend_declined" && <p className="text-slate-400 text-sm">{name} couldn't connect right now.</p>}
+                        {n.type === "group_invite"   && <p className="text-indigo-300 text-sm font-semibold">{name} added you to a study group!</p>}
+
+                        {unread && <button onClick={() => markRead(n.id)} className="text-slate-600 hover:text-slate-400 text-[10px] mt-2 transition-colors">Mark as read</button>}
                       </div>
                       {unread && <div className="w-2 h-2 bg-indigo-500 rounded-full flex-shrink-0 mt-1" />}
                     </div>
@@ -834,70 +805,355 @@ function NotificationsPage({ myUserId, onOpenChat }) {
         </>
       )}
 
-      {/* ── PENDING TAB ── */}
+      {/* ── PENDING ── */}
       {tab === "pending" && (
         <>
           {pending.length === 0 ? (
-            <div className="py-20 text-center px-8">
-              <div className="text-4xl mb-3">⏳</div>
-              <p className="text-white font-semibold text-sm mb-1">No pending requests</p>
-              <p className="text-slate-500 text-sm">Match requests you send will appear here while you wait for a response.</p>
-            </div>
+            <div className="py-20 text-center px-8"><div className="text-4xl mb-3">⏳</div><p className="text-white font-semibold text-sm mb-1">No pending requests</p><p className="text-slate-500 text-sm">Match requests you send will appear here.</p></div>
           ) : (
-            <>
-              <p className="text-slate-600 text-xs mb-4">
-                {pending.length} request{pending.length > 1 ? "s" : ""} waiting for a response
-              </p>
-              <div className="space-y-3">
-                {pending.map(m => {
-                  const rec      = m.receiver;
-                  const name     = rec?.display_name || "Student";
-                  const initials = name.slice(0, 2).toUpperCase();
-                  const sentAgo  = (() => {
-                    const diff = Date.now() - new Date(m.created_at).getTime();
-                    const days = Math.floor(diff / 86400000);
-                    const hrs  = Math.floor(diff / 3600000);
-                    if (days >= 1) return `${days}d ago`;
-                    if (hrs  >= 1) return `${hrs}h ago`;
-                    return "Just now";
-                  })();
-
-                  return (
-                    <div key={m.id} className="bg-slate-900 border border-amber-500/15 rounded-2xl p-4">
-                      <div className="flex items-start gap-3">
-                        <AvatarBubble initials={initials} size="sm" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-white text-sm font-semibold">{name}</p>
-                            <span className="text-amber-500/70 text-[10px] font-medium flex-shrink-0">⏳ {sentAgo}</span>
-                          </div>
-                          <p className="text-slate-500 text-xs mt-0.5">{rec?.program} · {rec?.year}</p>
-                          <div className="flex flex-wrap gap-1.5 mt-2">
-                            {(rec?.courses || []).slice(0, 3).map(c => <Tag key={c}>{c}</Tag>)}
-                            {rec?.meeting_preference && <Tag>{rec.meeting_preference}</Tag>}
-                          </div>
-                          <div className="flex items-center gap-3 mt-3">
-                            <span className="inline-flex items-center gap-1 text-amber-400 bg-amber-400/10 border border-amber-400/20 text-[10px] font-bold px-2.5 py-1 rounded-full">
-                              <Clock size={10} /> Awaiting response
-                            </span>
-                            <button
-                              onClick={() => cancelRequest(m.id)}
-                              className="text-slate-600 hover:text-red-400 text-[10px] font-medium transition-colors"
-                            >
-                              Cancel request
-                            </button>
-                          </div>
+            <><p className="text-slate-600 text-xs mb-4">{pending.length} request{pending.length > 1 ? "s" : ""} waiting for a response</p>
+            <div className="space-y-3">
+              {pending.map(m => {
+                const rec      = m.receiver;
+                const name     = rec?.display_name || "Student";
+                const initials = name.slice(0, 2).toUpperCase();
+                const diff     = Date.now() - new Date(m.created_at).getTime();
+                const sentAgo  = diff < 3600000 ? "Just now" : diff < 86400000 ? `${Math.floor(diff/3600000)}h ago` : `${Math.floor(diff/86400000)}d ago`;
+                return (
+                  <div key={m.id} className="bg-slate-900 border border-amber-500/15 rounded-2xl p-4">
+                    <div className="flex items-start gap-3">
+                      <AvatarBubble initials={initials} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-white text-sm font-semibold">{name}</p>
+                          <span className="text-amber-500/70 text-[10px] font-medium flex-shrink-0">⏳ {sentAgo}</span>
+                        </div>
+                        <p className="text-slate-500 text-xs mt-0.5">{rec?.program} · {rec?.year}</p>
+                        <div className="flex flex-wrap gap-1.5 mt-2">{(rec?.courses || []).slice(0, 3).map(c => <Tag key={c}>{c}</Tag>)}{rec?.meeting_preference && <Tag>{rec.meeting_preference}</Tag>}</div>
+                        <div className="flex items-center gap-3 mt-3">
+                          <span className="inline-flex items-center gap-1 text-amber-400 bg-amber-400/10 border border-amber-400/20 text-[10px] font-bold px-2.5 py-1 rounded-full"><Clock size={10} /> Awaiting response</span>
+                          <button onClick={() => cancelRequest(m.id)} className="text-slate-600 hover:text-red-400 text-[10px] font-medium transition-colors">Cancel request</button>
                         </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </>
+                  </div>
+                );
+              })}
+            </div></>
           )}
         </>
       )}
     </div>
+  );
+}
+
+// ─── CREATE STUDY GROUP MODAL ────────────────────────────────────────────────
+
+function CreateGroupModal({ myUserId, myProfile, friends, onClose, onCreated }) {
+  const [name,        setName]        = useState("");
+  const [selected,    setSelected]    = useState([]);
+  const [course,      setCourse]      = useState("");
+  const [meetPref,    setMeetPref]    = useState("");
+  const [description, setDescription] = useState("");
+  const [saving,      setSaving]      = useState(false);
+  const [error,       setError]       = useState("");
+
+  const toggleFriend = id => setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+
+  const create = async () => {
+    if (!name.trim()) { setError("Give your group a name."); return; }
+    if (selected.length === 0) { setError("Select at least one friend to invite."); return; }
+    setSaving(true);
+    const { data: group, error: err } = await supabase
+      .from("study_groups")
+      .insert({ name: name.trim(), created_by: myUserId, courses: course ? [course] : [], meeting_preference: meetPref || null, description: description.trim() || null })
+      .select().single();
+
+    if (err) { setError(err.message); setSaving(false); return; }
+
+    // Add creator as admin
+    await supabase.from("study_group_members").insert({ group_id: group.id, user_id: myUserId, role: "admin" });
+
+    // Add invited friends and notify them
+    for (const friendId of selected) {
+      await supabase.from("study_group_members").insert({ group_id: group.id, user_id: friendId, role: "member" });
+      await supabase.from("notifications").insert({ user_id: friendId, type: "group_invite", from_user_id: myUserId, match_id: group.id });
+    }
+
+    setSaving(false);
+    onCreated();
+  };
+
+  const courseOptions = myProfile?.courses || [];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end justify-center" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="bg-slate-950 border border-white/10 rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-white/5">
+          <h2 className="text-lg font-black text-white">Create Study Group</h2>
+          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors"><X size={18} /></button>
+        </div>
+
+        <div className="px-6 py-5 space-y-5">
+          {/* Group name */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Group Name</label>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. CP264 Night Owls"
+              className="w-full bg-slate-800 border border-slate-700 focus:border-indigo-500 text-white rounded-xl px-4 py-3 text-sm outline-none transition-colors placeholder-slate-600" />
+          </div>
+
+          {/* Course */}
+          {courseOptions.length > 0 && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Course (optional)</label>
+              <div className="flex flex-wrap gap-2">
+                {courseOptions.map(c => <Chip key={c} selected={course === c} onClick={() => setCourse(prev => prev === c ? "" : c)}>{c}</Chip>)}
+              </div>
+            </div>
+          )}
+
+          {/* Meeting preference */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Meeting Format (optional)</label>
+            <div className="flex gap-2">
+              {["In-Person","Online","Hybrid"].map(p => <Chip key={p} selected={meetPref === p} onClick={() => setMeetPref(prev => prev === p ? "" : p)}>{p}</Chip>)}
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Description (optional)</label>
+            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2} placeholder="What's this group about?"
+              className="w-full bg-slate-800 border border-slate-700 focus:border-indigo-500 text-white rounded-xl px-4 py-3 text-sm outline-none resize-none transition-colors placeholder-slate-600" />
+          </div>
+
+          {/* Invite friends */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Invite Friends</label>
+            {friends.length === 0 ? (
+              <p className="text-slate-600 text-sm">No friends yet. Add some from Discover!</p>
+            ) : (
+              <div className="space-y-2">
+                {friends.map(f => {
+                  const name     = f.display_name || "Student";
+                  const initials = name.slice(0, 2).toUpperCase();
+                  const isSelected = selected.includes(f.id);
+                  return (
+                    <button key={f.id} onClick={() => toggleFriend(f.id)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all ${isSelected ? "border-indigo-500/50 bg-indigo-500/10" : "border-slate-800 hover:border-slate-600"}`}>
+                      <AvatarBubble initials={initials} size="sm" />
+                      <div className="flex-1 text-left">
+                        <p className="text-white text-sm font-semibold">{name}</p>
+                        <p className="text-slate-500 text-xs">{f.program}</p>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? "border-indigo-500 bg-indigo-500" : "border-slate-600"}`}>
+                        {isSelected && <Check size={11} className="text-white" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {error && <p className="text-red-400 text-xs">{error}</p>}
+
+          <button onClick={create} disabled={saving} className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl transition-all flex items-center justify-center gap-2">
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Users size={16} />}
+            {saving ? "Creating…" : "Create Group"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PAGE: FRIENDS ───────────────────────────────────────────────────────────
+
+function FriendsPage({ myUserId, myProfile }) {
+  const [tab,         setTab]         = useState("friends");
+  const [friends,     setFriends]     = useState([]);
+  const [groups,      setGroups]      = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [showModal,   setShowModal]   = useState(false);
+  const [expandGroup, setExpandGroup] = useState(null);
+
+  const loadFriends = async () => {
+    const { data } = await supabase
+      .from("friendships")
+      .select("*, sender:sender_id(id,display_name,program,year,courses,meeting_preference), receiver:receiver_id(id,display_name,program,year,courses,meeting_preference)")
+      .or(`sender_id.eq.${myUserId},receiver_id.eq.${myUserId}`)
+      .eq("status", "accepted");
+
+    const friendList = (data || []).map(f => f.sender_id === myUserId ? f.receiver : f.sender).filter(Boolean);
+    setFriends(friendList);
+  };
+
+  const loadGroups = async () => {
+    const { data: memberships } = await supabase
+      .from("study_group_members")
+      .select("role, group:group_id(id, name, courses, meeting_preference, description, created_by, created_at)")
+      .eq("user_id", myUserId);
+
+    const groupList = (memberships || []).map(m => ({ ...m.group, myRole: m.role })).filter(Boolean);
+
+    // Load member counts
+    const withCounts = await Promise.all(groupList.map(async g => {
+      const { count } = await supabase.from("study_group_members").select("*", { count: "exact", head: true }).eq("group_id", g.id);
+      return { ...g, memberCount: count || 1 };
+    }));
+    setGroups(withCounts);
+  };
+
+  const load = async () => { setLoading(true); await Promise.all([loadFriends(), loadGroups()]); setLoading(false); };
+
+  useEffect(() => { load(); }, [myUserId]);
+
+  const removeFriend = async (friendId) => {
+    await supabase.from("friendships").delete()
+      .or(`and(sender_id.eq.${myUserId},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${myUserId})`);
+    setFriends(f => f.filter(x => x.id !== friendId));
+  };
+
+  const leaveGroup = async (groupId) => {
+    await supabase.from("study_group_members").delete().eq("group_id", groupId).eq("user_id", myUserId);
+    setGroups(g => g.filter(x => x.id !== groupId));
+  };
+
+  if (loading) return <div className="flex justify-center py-20"><Loader2 size={24} className="text-indigo-500 animate-spin" /></div>;
+
+  return (
+    <>
+      {showModal && (
+        <CreateGroupModal
+          myUserId={myUserId}
+          myProfile={myProfile}
+          friends={friends}
+          onClose={() => setShowModal(false)}
+          onCreated={() => { setShowModal(false); loadGroups(); setTab("groups"); }}
+        />
+      )}
+
+      <div className="flex gap-1 bg-slate-900/80 p-1 rounded-xl mb-5 border border-white/5">
+        <button onClick={() => setTab("friends")} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${tab === "friends" ? "bg-indigo-600 text-white shadow" : "text-slate-500 hover:text-slate-300"}`}>
+          Friends {friends.length > 0 && <span className={`w-4 h-4 rounded-full text-white text-[9px] font-bold flex items-center justify-center ${tab === "friends" ? "bg-white/20" : "bg-indigo-500"}`}>{friends.length}</span>}
+        </button>
+        <button onClick={() => setTab("groups")} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${tab === "groups" ? "bg-indigo-600 text-white shadow" : "text-slate-500 hover:text-slate-300"}`}>
+          Study Groups {groups.length > 0 && <span className={`w-4 h-4 rounded-full text-white text-[9px] font-bold flex items-center justify-center ${tab === "groups" ? "bg-white/20" : "bg-indigo-500"}`}>{groups.length}</span>}
+        </button>
+      </div>
+
+      {/* ── FRIENDS TAB ── */}
+      {tab === "friends" && (
+        <>
+          {friends.length === 0 ? (
+            <div className="py-20 text-center px-8">
+              <div className="text-4xl mb-3">🤝</div>
+              <p className="text-white font-semibold text-sm mb-1">No friends yet</p>
+              <p className="text-slate-500 text-sm">Tap "Add Friend" on someone's profile in Discover to connect.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {friends.map(f => {
+                const name     = f.display_name || "Student";
+                const initials = name.slice(0, 2).toUpperCase();
+                return (
+                  <div key={f.id} className="bg-slate-900 border border-white/5 rounded-2xl p-4">
+                    <div className="flex items-center gap-3">
+                      <AvatarBubble initials={initials} size="md" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-semibold text-sm">{name}</p>
+                        <p className="text-slate-500 text-xs mt-0.5">{f.program} · {f.year}</p>
+                        <div className="flex flex-wrap gap-1 mt-1.5">{(f.courses || []).slice(0, 3).map(c => <Tag key={c}>{c}</Tag>)}</div>
+                      </div>
+                      <button onClick={() => removeFriend(f.id)} className="text-slate-700 hover:text-red-400 transition-colors p-1.5" title="Remove friend">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Create group CTA */}
+              <button onClick={() => setShowModal(true)}
+                className="w-full flex items-center justify-center gap-2 border border-dashed border-indigo-500/30 hover:border-indigo-500/60 hover:bg-indigo-500/5 text-indigo-400 font-semibold py-3.5 rounded-2xl transition-all text-sm mt-2">
+                <Plus size={16} /> Form a Study Group from Friends
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── GROUPS TAB ── */}
+      {tab === "groups" && (
+        <>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-slate-600 text-xs">{groups.length} group{groups.length !== 1 ? "s" : ""}</p>
+            <button onClick={() => setShowModal(true)} className="flex items-center gap-1.5 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors">
+              <Plus size={13} /> New Group
+            </button>
+          </div>
+
+          {groups.length === 0 ? (
+            <div className="py-16 text-center px-8">
+              <div className="text-4xl mb-3">📚</div>
+              <p className="text-white font-semibold text-sm mb-1">No study groups yet</p>
+              <p className="text-slate-500 text-sm mb-5">Create one from your friends list.</p>
+              <button onClick={() => { setTab("friends"); }} className="text-indigo-400 text-sm font-semibold hover:text-indigo-300 transition-colors">
+                Go to Friends →
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {groups.map(g => {
+                const isExpanded = expandGroup === g.id;
+                return (
+                  <div key={g.id} className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden">
+                    <button onClick={() => setExpandGroup(isExpanded ? null : g.id)} className="w-full p-4 text-left">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                              <Users size={14} className="text-white" />
+                            </div>
+                            <div>
+                              <p className="text-white font-bold text-sm">{g.name}</p>
+                              <p className="text-slate-500 text-xs">{g.memberCount} member{g.memberCount !== 1 ? "s" : ""} · {g.myRole === "admin" ? "Admin" : "Member"}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {g.myRole === "admin" && <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full">Admin</span>}
+                          {isExpanded ? <ChevronUp size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-500" />}
+                        </div>
+                      </div>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="px-4 pb-4 pt-0 border-t border-white/5 space-y-3">
+                        {g.description && <p className="text-slate-400 text-xs leading-relaxed pt-3">{g.description}</p>}
+                        <div className="flex flex-wrap gap-1.5">
+                          {(g.courses || []).map(c => <Tag key={c}>{c}</Tag>)}
+                          {g.meeting_preference && <Tag>{g.meeting_preference}</Tag>}
+                        </div>
+                        <div className="flex gap-2 pt-1">
+                          <button onClick={() => setShowModal(true)} className="flex-1 flex items-center justify-center gap-1.5 border border-slate-700 hover:border-indigo-500/40 text-slate-400 hover:text-indigo-400 text-xs font-semibold py-2 rounded-xl transition-all">
+                            <UserPlus size={12} /> Invite Friend
+                          </button>
+                          <button onClick={() => leaveGroup(g.id)} className="flex items-center gap-1.5 border border-slate-700 hover:border-red-500/40 text-slate-600 hover:text-red-400 text-xs font-medium px-3 py-2 rounded-xl transition-all">
+                            <Trash2 size={12} /> Leave
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+    </>
   );
 }
 
@@ -924,10 +1180,7 @@ function ChatsListPage({ myUserId, onOpenChat }) {
   return (
     <>
       {matches.length === 0 ? (
-        <div className="py-20 text-center px-8">
-          <div className="text-4xl mb-3">💬</div>
-          <p className="text-slate-500 text-sm">No matches yet. Start discovering people!</p>
-        </div>
+        <div className="py-20 text-center px-8"><div className="text-4xl mb-3">💬</div><p className="text-slate-500 text-sm">No study matches yet. Start discovering people!</p></div>
       ) : (
         <div className="space-y-3">
           {matches.map(m => {
@@ -938,10 +1191,7 @@ function ChatsListPage({ myUserId, onOpenChat }) {
               <button key={m.id} onClick={() => onOpenChat(m.id, otherId, otherName || "Study Partner")}
                 className="w-full flex items-center gap-4 bg-slate-900 border border-white/5 hover:border-indigo-500/30 rounded-2xl p-4 transition-all text-left">
                 <AvatarBubble initials={initials} size="md" />
-                <div>
-                  <p className="text-white font-semibold text-sm">{otherName}</p>
-                  <p className="text-slate-600 text-xs">Tap to open chat</p>
-                </div>
+                <div><p className="text-white font-semibold text-sm">{otherName}</p><p className="text-slate-600 text-xs">Tap to open chat</p></div>
               </button>
             );
           })}
@@ -961,8 +1211,7 @@ function ChatPage({ matchId, otherUserId, otherName, myUserId, onBack }) {
   const bottomRef = useRef(null);
 
   const load = async () => {
-    const { data } = await supabase
-      .from("messages").select("*").eq("match_id", matchId).order("created_at", { ascending: true });
+    const { data } = await supabase.from("messages").select("*").eq("match_id", matchId).order("created_at", { ascending: true });
     setMessages(data || []);
     setLoading(false);
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
@@ -970,13 +1219,9 @@ function ChatPage({ matchId, otherUserId, otherName, myUserId, onBack }) {
 
   useEffect(() => {
     load();
-    const channel = supabase
-      .channel("messages:" + matchId)
+    const channel = supabase.channel("messages:" + matchId)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `match_id=eq.${matchId}` },
-        payload => {
-          setMessages(prev => [...prev, payload.new]);
-          setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-        })
+        payload => { setMessages(prev => [...prev, payload.new]); setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50); })
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [matchId]);
@@ -984,8 +1229,7 @@ function ChatPage({ matchId, otherUserId, otherName, myUserId, onBack }) {
   const send = async () => {
     if (!input.trim() || sending) return;
     setSending(true);
-    const content = input.trim();
-    setInput("");
+    const content = input.trim(); setInput("");
     await supabase.from("messages").insert({ match_id: matchId, sender_id: myUserId, content });
     setSending(false);
   };
@@ -996,33 +1240,22 @@ function ChatPage({ matchId, otherUserId, otherName, myUserId, onBack }) {
   return (
     <div className="flex flex-col h-screen bg-[#06080f]">
       <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5 bg-slate-950/90 backdrop-blur flex-shrink-0">
-        <button onClick={onBack} className="text-slate-500 hover:text-white transition-colors">
-          <ArrowLeft size={20} />
-        </button>
+        <button onClick={onBack} className="text-slate-500 hover:text-white transition-colors"><ArrowLeft size={20} /></button>
         <AvatarBubble initials={initials} size="sm" />
-        <div>
-          <p className="text-white font-semibold text-sm">{otherName}</p>
-          <p className="text-slate-600 text-[10px]">Study partner</p>
-        </div>
+        <div><p className="text-white font-semibold text-sm">{otherName}</p><p className="text-slate-600 text-[10px]">Study partner</p></div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-        {loading ? (
-          <div className="flex justify-center pt-10"><Loader2 size={24} className="text-indigo-500 animate-spin" /></div>
-        ) : messages.length === 0 ? (
-          <div className="text-center pt-16"><p className="text-slate-500 text-sm">You're matched! Say hello 👋</p></div>
-        ) : (
-          messages.map(m => {
+        {loading ? <div className="flex justify-center pt-10"><Loader2 size={24} className="text-indigo-500 animate-spin" /></div>
+          : messages.length === 0 ? <div className="text-center pt-16"><p className="text-slate-500 text-sm">You're matched! Say hello 👋</p></div>
+          : messages.map(m => {
             const isMe = m.sender_id === myUserId;
             return (
               <div key={m.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isMe ? "bg-indigo-600 text-white rounded-br-md" : "bg-slate-800 text-slate-100 rounded-bl-md"}`}>
-                  {m.content}
-                </div>
+                <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isMe ? "bg-indigo-600 text-white rounded-br-md" : "bg-slate-800 text-slate-100 rounded-bl-md"}`}>{m.content}</div>
               </div>
             );
-          })
-        )}
+          })}
         <div ref={bottomRef} />
       </div>
 
@@ -1030,8 +1263,7 @@ function ChatPage({ matchId, otherUserId, otherName, myUserId, onBack }) {
         <div className="flex gap-2 items-end">
           <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKey} rows={1} placeholder="Message…"
             className="flex-1 bg-slate-800 border border-slate-700 focus:border-indigo-500 text-white text-sm rounded-2xl px-4 py-3 outline-none resize-none transition-colors placeholder-slate-600" />
-          <button onClick={send} disabled={!input.trim() || sending}
-            className="w-11 h-11 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-2xl flex items-center justify-center transition-all flex-shrink-0">
+          <button onClick={send} disabled={!input.trim() || sending} className="w-11 h-11 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-2xl flex items-center justify-center transition-all flex-shrink-0">
             {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
           </button>
         </div>
@@ -1072,10 +1304,7 @@ function AccountPage({ user, profile, onSignOut, onEditProfile, onOpenNotificati
             { label:"Notifications",          icon:Bell,     action: onOpenNotifications },
           ].map(({ label, icon: Icon, action }) => (
             <button key={label} onClick={action} className="flex items-center justify-between w-full px-5 py-4 hover:bg-white/5 transition-colors">
-              <div className="flex items-center gap-3">
-                <Icon size={15} className="text-indigo-400" />
-                <span className="text-white text-sm">{label}</span>
-              </div>
+              <div className="flex items-center gap-3"><Icon size={15} className="text-indigo-400" /><span className="text-white text-sm">{label}</span></div>
               <ChevronRight size={15} className="text-slate-600" />
             </button>
           ))}
@@ -1101,39 +1330,47 @@ export default function StudySyncApp() {
 
   const loadProfile = async (uid) => {
     const { data } = await supabase.from("profiles").select("*").eq("id", uid).single();
-    if (data) {
-      setMyProfile(data);
-      setPage(data.program ? "browse" : "onboarding");
-    } else {
-      setPage("onboarding");
-    }
-    const { count } = await supabase
-      .from("notifications")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", uid)
-      .eq("read", false);
+    if (data) { setMyProfile(data); setPage(data.program ? "browse" : "onboarding"); }
+    else setPage("onboarding");
+    const { count } = await supabase.from("notifications").select("*", { count: "exact", head: true }).eq("user_id", uid).eq("read", false);
     setUnread(count || 0);
   };
 
   useEffect(() => {
+    let profileLoaded = false;
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) { setAuthUser(session.user); await loadProfile(session.user.id); }
+      if (session?.user) {
+        setAuthUser(session.user);
+        await loadProfile(session.user.id);
+        profileLoaded = true;
+      }
       setAuthLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (session?.user) setAuthUser(session.user);
-      else { setAuthUser(null); setMyProfile(null); setPage("landing"); }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_e, session) => {
+      if (session?.user) {
+        setAuthUser(session.user);
+        // Only call loadProfile here if getSession didn't already do it
+        // (handles token refresh and cross-tab sign-in)
+        if (!profileLoaded) {
+          profileLoaded = true;
+          await loadProfile(session.user.id);
+        }
+      } else {
+        setAuthUser(null);
+        setMyProfile(null);
+        profileLoaded = false;
+        setPage("landing");
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
     if (!authUser) return;
-    const channel = supabase
-      .channel("unread-badge")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${authUser.id}` },
-        () => setUnread(n => n + 1))
+    const channel = supabase.channel("unread-badge")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${authUser.id}` }, () => setUnread(n => n + 1))
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [authUser]);
@@ -1145,36 +1382,22 @@ export default function StudySyncApp() {
     setMyProfile({ id: authUser.id, ...profileData });
     setPage("browse");
   };
-
-  const openChat = (matchId, otherId, otherName) => {
-    setActiveChat({ matchId, otherId, otherName });
-    setPage("chat");
-  };
-
+  const openChat = (matchId, otherId, otherName) => { setActiveChat({ matchId, otherId, otherName }); setPage("chat"); };
   const navigate = (dest) => {
     if (dest === "browse" && !myProfile?.program) { setPage("onboarding"); return; }
     setPage(dest);
     if (dest === "notifications") setUnread(0);
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#06080f] flex items-center justify-center">
-        <Loader2 size={32} className="text-indigo-500 animate-spin" />
-      </div>
-    );
-  }
+  if (authLoading) return <div className="min-h-screen bg-[#06080f] flex items-center justify-center"><Loader2 size={32} className="text-indigo-500 animate-spin" /></div>;
 
   const showNav = authUser && !["landing","login","onboarding","chat"].includes(page);
 
   return (
     <div className="font-sans min-h-screen bg-[#06080f] text-white">
-      {page === "landing" && <LandingPage onGetStarted={() => setPage("login")} />}
-      {page === "login"   && <LoginPage   onAuthSuccess={handleAuthSuccess} />}
-
-      {page === "onboarding" && (
-        <OnboardingFlow savedProfile={myProfile} onComplete={handleProfileComplete} />
-      )}
+      {page === "landing"    && <LandingPage onGetStarted={() => setPage("login")} />}
+      {page === "login"      && <LoginPage   onAuthSuccess={handleAuthSuccess} />}
+      {page === "onboarding" && <OnboardingFlow savedProfile={myProfile} onComplete={handleProfileComplete} />}
 
       {page === "browse" && (
         <div className="pb-28 pt-10">
@@ -1194,6 +1417,14 @@ export default function StudySyncApp() {
         </div>
       )}
 
+      {page === "friends" && (
+        <div className="max-w-lg mx-auto px-5 pt-10 pb-28">
+          <p className="text-indigo-400 text-xs font-bold uppercase tracking-widest mb-1">Network</p>
+          <h1 className="text-2xl font-black mb-6">Friends & Groups</h1>
+          <FriendsPage myUserId={authUser?.id} myProfile={myProfile} />
+        </div>
+      )}
+
       {page === "chats" && (
         <div className="max-w-lg mx-auto px-5 pt-10 pb-28">
           <h1 className="text-2xl font-black mb-6">Messages</h1>
@@ -1202,23 +1433,11 @@ export default function StudySyncApp() {
       )}
 
       {page === "chat" && activeChat && (
-        <ChatPage
-          matchId={activeChat.matchId}
-          otherUserId={activeChat.otherId}
-          otherName={activeChat.otherName}
-          myUserId={authUser?.id}
-          onBack={() => setPage("chats")}
-        />
+        <ChatPage matchId={activeChat.matchId} otherUserId={activeChat.otherId} otherName={activeChat.otherName} myUserId={authUser?.id} onBack={() => setPage("chats")} />
       )}
 
       {page === "account" && (
-        <AccountPage
-          user={authUser}
-          profile={myProfile}
-          onSignOut={handleSignOut}
-          onEditProfile={() => setPage("onboarding")}
-          onOpenNotifications={() => navigate("notifications")}
-        />
+        <AccountPage user={authUser} profile={myProfile} onSignOut={handleSignOut} onEditProfile={() => setPage("onboarding")} onOpenNotifications={() => navigate("notifications")} />
       )}
 
       {showNav && <Navbar currentPage={page} onNavigate={navigate} unreadCount={unread} />}
